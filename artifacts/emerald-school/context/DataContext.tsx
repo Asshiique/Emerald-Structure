@@ -81,6 +81,17 @@ export interface AppSettings {
   academicYear: string;
 }
 
+export interface TimetableSlot {
+  time: string;
+  subject: string;
+  teacher: string;
+}
+
+export interface TimetableDay {
+  day: string;
+  slots: TimetableSlot[];
+}
+
 export interface AppData {
   setupComplete: boolean;
   staff: StaffMember[];
@@ -90,6 +101,7 @@ export interface AppData {
   evaluations: Evaluation[];
   settings: AppSettings;
   firstLoginParents: string[];
+  timetable: TimetableDay[];
 }
 
 const STORAGE_KEY = "@emerald_app_data";
@@ -99,6 +111,14 @@ const SEED_DATA: AppData = {
   setupComplete: true,
   settings: { schoolName: "Emerald International School", address: "Mannarkkad, Palakkad, Kerala 678583", phone: "+91 4924 222 001", email: "info@emeraldschool.edu", principalName: "Dr. Thomas Joseph", academicYear: "2024-25" },
   firstLoginParents: [],
+  timetable: [
+    { day: "Monday", slots: [{ time: "09:00", subject: "Mathematics", teacher: "Mr. Rajan Krishnan" }, { time: "10:00", subject: "Physics", teacher: "Ms. Priya Menon" }] },
+    { day: "Tuesday", slots: [{ time: "09:00", subject: "English", teacher: "Ms. Anita George" }, { time: "10:00", subject: "Chemistry", teacher: "Mr. Suresh Kumar" }] },
+    { day: "Wednesday", slots: [{ time: "09:00", subject: "Biology", teacher: "Ms. Lakshmi Nair" }, { time: "10:00", subject: "Computer Science", teacher: "Mr. Vinod Thomas" }] },
+    { day: "Thursday", slots: [{ time: "09:00", subject: "Mathematics", teacher: "Mr. Rajan Krishnan" }, { time: "10:00", subject: "English", teacher: "Ms. Anita George" }] },
+    { day: "Friday", slots: [{ time: "09:00", subject: "Physics", teacher: "Ms. Priya Menon" }, { time: "10:00", subject: "Chemistry", teacher: "Mr. Suresh Kumar" }] },
+    { day: "Saturday", slots: [{ time: "09:00", subject: "Computer Science", teacher: "Mr. Vinod Thomas" }, { time: "10:00", subject: "Biology", teacher: "Ms. Lakshmi Nair" }] },
+  ],
   staff: [
     { id: "staff_001", name: "Mr. Rajan Krishnan", phone: "+91 98765 11001", email: "rajan@emerald.edu", role: "Class Teacher", department: "Mathematics", classSection: "X-B", joinDate: "2018-06-01", employeeId: "EIS/TCH/018", isActive: true },
     { id: "staff_002", name: "Ms. Priya Menon", phone: "+91 98765 11002", email: "priya@emerald.edu", role: "Subject Teacher", department: "Physics", classSection: "X-B", joinDate: "2020-06-01", employeeId: "EIS/TCH/020", isActive: true },
@@ -142,6 +162,7 @@ interface DataContextType {
   addEvaluation: (ev: Omit<Evaluation, "id">) => Promise<void>;
   updateEvaluation: (id: string, updates: Partial<Evaluation>) => Promise<void>;
   updateSettings: (s: Partial<AppSettings>) => Promise<void>;
+  updateTimetable: (day: string, slots: TimetableSlot[]) => Promise<void>;
   markParentFirstLogin: (email: string) => Promise<void>;
 }
 
@@ -199,9 +220,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const addEvaluation = async (ev: Omit<Evaluation, "id">) => { const entry: Evaluation = { ...ev, id: "eval_" + uid() }; await update((prev) => ({ ...prev, evaluations: [entry, ...prev.evaluations] })); };
   const updateEvaluation = async (id: string, updates: Partial<Evaluation>) => { await update((prev) => ({ ...prev, evaluations: prev.evaluations.map((e) => (e.id === id ? { ...e, ...updates } : e)) })); };
   const updateSettings = async (s: Partial<AppSettings>) => { await update((prev) => ({ ...prev, settings: { ...prev.settings, ...s } })); };
+  const updateTimetable = async (day: string, slots: TimetableSlot[]) => { await update((prev) => ({ ...prev, timetable: prev.timetable.map((d) => (d.day === day ? { ...d, slots } : d)) })); };
   const markParentFirstLogin = async (email: string) => { await update((prev) => ({ ...prev, firstLoginParents: prev.firstLoginParents.includes(email) ? prev.firstLoginParents : [...prev.firstLoginParents, email] })); };
 
-  return <DataContext.Provider value={{ data, isLoading, completeSetup, addStaff, updateStaff, removeStaff, addStudent, updateStudent, removeStudent, markAttendance, getAttendanceForDate, addHomework, addEvaluation, updateEvaluation, updateSettings, markParentFirstLogin }}>{children}</DataContext.Provider>;
+  return <DataContext.Provider value={{ data, isLoading, completeSetup, addStaff, updateStaff, removeStaff, addStudent, updateStudent, removeStudent, markAttendance, getAttendanceForDate, addHomework, addEvaluation, updateEvaluation, updateSettings, updateTimetable, markParentFirstLogin }}>{children}</DataContext.Provider>;
 }
 
 export function useData() { const ctx = useContext(DataContext); if (!ctx) throw new Error("useData must be used within DataProvider"); return ctx; }
