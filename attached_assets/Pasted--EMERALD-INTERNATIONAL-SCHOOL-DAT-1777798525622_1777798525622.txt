@@ -1,0 +1,239 @@
+================================================================
+EMERALD INTERNATIONAL SCHOOL — DATA MANAGEMENT PROMPTS
+Admin adds staff. Class teacher adds students. All through the app.
+No coding. No database console. Everything via simple forms.
+================================================================
+
+
+----------------------------------------------------------------
+PROMPT — COMPLETE STAFF & STUDENT MANAGEMENT SYSTEM
+(Paste this fully into Replit AI chat)
+----------------------------------------------------------------
+
+Add a complete in-app management system to the Emerald International School app.
+No one should ever need to touch the database directly.
+Everything is done through simple forms inside the app.
+
+There are 3 roles: admin, teacher, student/parent.
+Each role sees a different version of the app.
+
+================================================================
+PART 1 — ADMIN PANEL (admin role only)
+================================================================
+
+Add an "Admin Panel" section visible only when role == admin.
+Place it as a separate tab or accessible from Profile page → "Admin Panel" menu item.
+
+AdminPanelPage — shows a grid of management cards:
+
+Card 1: "Manage Staff"
+Card 2: "Manage Students"  
+Card 3: "Post Notice"
+Card 4: "Post Homework"
+Card 5: "Fee Management"
+Card 6: "App Settings"
+
+Each card: white background, red icon, title, subtitle showing count (e.g. "12 teachers", "240 students"), border radius 14px, shadow.
+
+---
+
+ADMIN FUNCTION 1 — ADD STAFF MEMBER
+(Admin adds teachers, office staff, supporting staff)
+
+Navigate to: AdminPanel → Manage Staff → Add Staff
+
+Form fields:
+- Full Name (text field)
+- Phone Number (text field, number keyboard)
+- Email Address (text field)
+- Role (dropdown): Class Teacher | Subject Teacher | Office Staff | Supporting Staff | Principal | Vice Principal
+- Department/Subject (text field) — e.g. Mathematics, Physics, Office
+- Class Section Assigned (dropdown, only show if role is Class Teacher or Subject Teacher): LKG, UKG, I-A, I-B, II-A, II-B, III-A, III-B, IV-A, IV-B, V-A, V-B, VI-A, VI-B, VII-A, VII-B, VIII-A, VIII-B, IX-A, IX-B, X-A, X-B, XI Science, XI Commerce, XII Science, XII Commerce
+- Date of Joining (date picker)
+- Employee ID (text field)
+- Profile Photo (optional image upload)
+- "Add Staff Member" button — red, full width
+
+On submit:
+- Create user account with email + temporary password "Emerald@123"
+- Save all details to users collection with role = teacher (or staff)
+- Show success message: "Staff member added. They can log in with their email and password: Emerald@123"
+- Staff list updates immediately
+
+Staff list view:
+- Search bar at top
+- Filter chips: All | Teachers | Office Staff | Supporting Staff
+- Each staff card: avatar with initials + name + role + subject/department + phone number
+- Tap card → view full profile
+- Edit button → edit any field
+- Remove button → confirmation dialog → deactivate account
+
+---
+
+ADMIN FUNCTION 2 — APP SETTINGS
+(Admin controls school-wide settings)
+
+AppSettingsPage form:
+- School Name (text field) — default "Emerald International School"
+- School Address (text field)
+- School Phone (text field)
+- School Email (text field)
+- Principal Name (text field)
+- Academic Year (text field) — e.g. "2024-25"
+- School Logo (image upload)
+- "Save Settings" button
+
+These settings automatically update across the whole app wherever school info appears.
+
+================================================================
+PART 2 — CLASS TEACHER PANEL (teacher role only)
+================================================================
+
+When a teacher logs in they see a Teacher Dashboard instead of the student home screen.
+
+Teacher Dashboard shows:
+- "Good morning, [Teacher Name]" header (same red style)
+- Their assigned class section prominently: "Class Teacher — X-B"
+- Quick stats: Total Students, Present Today, Homework Pending
+- Quick action buttons: Mark Attendance, Add Student, Post Homework, View Students
+
+---
+
+TEACHER FUNCTION 1 — ADD STUDENT
+(Class teacher adds students to their assigned class)
+
+Navigate to: Teacher Dashboard → Add Student
+
+Form fields:
+- Student Full Name (text field)
+- Date of Birth (date picker)
+- Gender (dropdown): Male | Female
+- Blood Group (dropdown): A+, A-, B+, B-, O+, O-, AB+, AB-
+- Class Section (auto-filled with teacher's assigned class, not editable)
+- Roll Number (text field)
+- Admission Number (text field)
+- Parent/Guardian Name (text field)
+- Parent Phone Number (text field, number keyboard) — this becomes their login
+- Parent Email (text field) — this becomes their login email
+- Parent WhatsApp Number (text field)
+- Home Address (text field, multiline)
+- Previous School (text field, optional)
+- Photo (optional image upload)
+- "Add Student" button — red, full width
+
+On submit:
+- Create parent login account with their email + temporary password "Emerald@123"
+- Save complete student profile to database
+- Show success: "Student added successfully. Parent can log in with [email] and password: Emerald@123"
+- Student appears immediately in class list
+
+Student list view (Teacher Dashboard → View Students):
+- Search bar
+- List of all students in teacher's class section only
+- Each row: roll number + student name + parent name + parent phone
+- Tap → full student profile
+- Edit button → edit any field
+- Phone icon → tap to call parent directly
+
+---
+
+TEACHER FUNCTION 2 — MARK ATTENDANCE
+(Simple one-screen attendance marking)
+
+Navigate to: Teacher Dashboard → Mark Attendance
+
+AttendancePage for teacher:
+- Today's date shown at top (not editable)
+- Class section shown (auto from teacher profile)
+- List of all students in their class
+- Each student row: roll number + name + 3 buttons: P (Present, green), A (Absent, red), L (Late, amber)
+- Default: all marked Present
+- Teacher taps to change individual students
+- Progress bar showing "X / Y marked"
+- "Submit Attendance" button at bottom — red, full width
+- On submit: save all attendance records + show success
+- If attendance already marked today: show today's records with "Edit" option
+
+---
+
+TEACHER FUNCTION 3 — POST HOMEWORK
+(Teacher posts homework for their class)
+
+Same form as before but:
+- Class Section: auto-filled from teacher's profile (not editable)
+- Subject: auto-filled from teacher's subject (not editable)
+- Title, Description, Due Date: teacher fills in
+- "Post" button
+
+================================================================
+PART 3 — PARENT/STUDENT VIEW
+================================================================
+
+Parents and students see the normal app (Home, Notices, Progress, Fees, Profile).
+They cannot add or edit any data.
+They only view what teachers and admin have entered.
+
+When parent logs in for first time:
+- Show a welcome screen: "Welcome to Emerald International School App"
+- Show their child's name and class
+- Brief tour of 3 features: Notices, Progress, Fees
+- "Get Started" button
+
+================================================================
+PART 4 — FIRST TIME SETUP FLOW
+================================================================
+
+When the app is opened for the very first time (no admin exists yet):
+
+Show a Setup Screen:
+- Title "Set up Emerald International School"
+- Subtitle "Create your admin account to get started"
+- Form: Admin Name, Email, Phone, Password, Confirm Password
+- "Create Admin Account" button
+- This creates the first admin user
+- After setup → goes to Admin Panel directly
+
+This setup screen only appears once. After admin is created it never shows again.
+
+================================================================
+DESIGN RULES (keep consistent with existing app)
+================================================================
+
+- All new pages use the same red theme #C0282A
+- All headers: red background, white text, back arrow
+- All cards: white, border radius 14px, shadow
+- All primary buttons: red background, white text, full width, height 50px, border radius 12px
+- All text fields: filled background #F5F4F2, border radius 10px
+- All section labels: 11px uppercase muted
+- Font: Plus Jakarta Sans throughout
+- Keep all existing screens exactly as they are
+- Only add new screens and features
+
+================================================================
+SUMMARY OF WHO DOES WHAT
+================================================================
+
+ADMIN:
+✓ Adds teachers and all staff (with login credentials)
+✓ Controls school settings (name, phone, logo)
+✓ Posts school-wide notices
+✓ Views all students and staff
+✓ Manages fees
+
+CLASS TEACHER:
+✓ Adds students to their class (with parent login credentials)
+✓ Marks daily attendance
+✓ Posts homework for their class
+✓ Views and calls parents directly
+
+PARENTS/STUDENTS:
+✓ View notices
+✓ View attendance
+✓ View marks/progress
+✓ View homework
+✓ View fees
+✓ View student ID card
+
+================================================================
+END OF PROMPT
+================================================================

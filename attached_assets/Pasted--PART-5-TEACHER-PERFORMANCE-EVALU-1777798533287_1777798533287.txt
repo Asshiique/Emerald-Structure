@@ -1,0 +1,125 @@
+================================================================
+PART 5 — TEACHER PERFORMANCE EVALUATION SYSTEM
+(Admin only creates & manages, teachers can only view)
+================================================================
+
+Add a "Teacher Performance" section inside Admin Panel.
+
+Visible ONLY for admin role.
+
+---
+
+ADMIN FUNCTION — EVALUATE TEACHERS
+
+Navigate to:
+Admin Panel → Teacher Performance
+
+Page shows:
+- List of all teachers
+- Each teacher card shows: Name, Subject, Assigned Class
+- "Evaluate" button on each teacher
+
+---
+
+When admin clicks "Evaluate":
+
+Open TeacherEvaluationForm
+
+Fields:
+
+- Teacher Name (auto-filled, not editable)
+- Subject (auto-filled)
+- Class Section (auto-filled)
+
+Performance Criteria (rating system 1–5 stars or dropdown 1–5):
+
+1. Teaching Quality
+2. Classroom Management
+3. Student Engagement
+4. Punctuality & Discipline
+5. Communication with Parents
+6. Homework & Task Management
+
+Additional Fields:
+
+- Strengths (multiline text)
+- Areas for Improvement (multiline text)
+- Admin Remarks (multiline text)
+- Overall Rating (auto-calculated OR manual dropdown 1–5)
+- Evaluation Date (auto-filled current date)
+
+Button:
+- "Save Evaluation" (red, full width)
+
+---
+
+ON SUBMIT:
+
+- Save evaluation linked to teacher ID
+- Store history (multiple evaluations over time)
+- Show success message: "Evaluation saved successfully"
+
+---
+
+ADMIN VIEW — PERFORMANCE HISTORY
+
+When admin clicks on a teacher:
+
+- Show list of all past evaluations (latest first)
+- Each card shows:
+  - Date
+  - Overall Rating
+  - Quick summary (first line of remarks)
+- Tap → full detailed evaluation
+
+---
+
+TEACHER VIEW — PERFORMANCE (VIEW ONLY)
+
+Add new section in Teacher Dashboard:
+
+"Performance"
+
+Visible ONLY for teacher role.
+
+---
+
+TeacherPerformancePage:
+
+- Show all evaluations received
+- Sorted by latest first
+
+Each card shows:
+- Date
+- Overall Rating
+- Admin Remarks (short preview)
+
+Tap → View Full Details:
+
+- All ratings
+- Strengths
+- Areas for Improvement
+- Admin Remarks
+
+IMPORTANT RULES:
+
+✓ Teacher CANNOT edit, delete, or respond  
+✓ Teacher CANNOT see other teachers’ evaluations  
+✓ Only sees their own performance data  
+
+---
+
+OPTIONAL (BUT RECOMMENDED):
+
+Add status indicator:
+- Green: Excellent (4–5)
+- Yellow: Average (3)
+- Red: Needs Improvement (1–2)
+
+---
+
+SECURITY RULES:
+
+- Only admin can create/edit/delete evaluations
+- Teachers have read-only access
+- Parents/students cannot see any performance data

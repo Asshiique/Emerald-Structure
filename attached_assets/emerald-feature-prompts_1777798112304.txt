@@ -1,0 +1,171 @@
+================================================================
+EMERALD INTERNATIONAL SCHOOL — REPLIT FEATURE PROMPTS
+Paste each prompt separately into Replit's chat, one at a time.
+Wait for each feature to finish before pasting the next one.
+================================================================
+
+
+----------------------------------------------------------------
+PROMPT 1 — EMERGENCY CALL BUTTON
+(Paste this first — easiest, takes 2 minutes)
+----------------------------------------------------------------
+
+Add an emergency call button to the Home screen of the Emerald International School app.
+
+Place it as a floating card just below the notice banner and above the stats grid.
+
+Design:
+- Card background: white, border radius 14px, shadow, margin horizontal 16px
+- Single row inside: red phone icon on left (in a 36x36px red circle #C0282A, icon white) + text column (title "Call School Office" 13px weight 600 color #1A1A1A, subtitle "Mannarkkad · Available 8AM–4PM" 11px muted) + red chevron arrow on right
+- On tap: open phone dialer with number tel:+919400000000 (replace with real school number)
+- The entire card is tappable
+
+Also add a smaller version in the Profile page under the About section:
+- Menu item with phone icon | "Call School Office" | same dial action
+
+
+----------------------------------------------------------------
+PROMPT 2 — DIGITAL STUDENT ID CARD
+(Paste after Prompt 1 is done)
+----------------------------------------------------------------
+
+Add a Digital Student ID Card screen to the Emerald International School app.
+
+How to access it:
+- Add a menu item in the Profile page called "My ID Card" with a card/id icon
+- On tap navigate to the new IDCardPage
+
+IDCardPage design:
+- Page background: #F5F4F2
+- App bar: red #C0282A, title "Student ID Card" in white, back arrow white
+
+Card in the center of the screen:
+- White card, border radius 20px, shadow, margin 20px horizontal
+- Top section background #C0282A, border radius 20px 20px 0 0, padding 20px
+  - Row: school shield icon (white, 32px) + Column ("EMERALD INTERNATIONAL SCHOOL" 10px white uppercase letter spacing, "Mannarkkad, Kerala" 10px white opacity 70%)
+- Middle section: white background, padding 20px, centered
+  - CircleAvatar 80px, background #F8EBEB, initials from student name, font 28px weight 700 color #C0282A, border 3px solid #C0282A
+  - Student name: 18px weight 700 color #1A1A1A, margin top 12px
+  - Class & Section: 13px color #555550, margin top 4px
+  - Student ID: 12px color #888882 letter spacing 0.05em, margin top 4px
+- Divider line
+- Details grid (2 columns):
+  - Roll No | Blood Group (show A+ as placeholder)
+  - Academic Year | Date of Birth
+  Each cell: label 10px muted uppercase, value 13px weight 600 #1A1A1A
+- Bottom section background #F8EBEB, border radius 0 0 20px 20px, padding 12px 20px
+  - Text "Valid for Academic Year 2024–25" centered 11px color #C0282A weight 500
+
+Below the card:
+- Button "Download ID Card" — outlined style, border #C0282A, text #C0282A, icon download, full width minus 40px margin
+- Small text below: "Show this ID at school gate" centered 11px muted
+
+Connect all student data (name, class, roll number, student ID) to the logged-in user's data.
+
+
+----------------------------------------------------------------
+PROMPT 3 — HOMEWORK / ASSIGNMENT SECTION
+(Paste after Prompt 2 is done)
+----------------------------------------------------------------
+
+Add a complete Homework and Assignments feature to the Emerald International School app.
+
+PART A — Add "Homework" tab to the bottom navigation bar:
+- Add a 6th item OR replace the least used item with a homework/book icon
+- Label: "Homework"
+- Navigate to HomeworkPage
+
+PART B — HomeworkPage design:
+- Page background: #F5F4F2
+- Header: red #C0282A, title "Homework", subtitle showing today's date
+
+Filter chips below header:
+- All, Pending, Submitted, By Subject
+- Selected: red filled, unselected: white outlined
+
+Main content: ListView of homework cards, each card:
+- White background, border radius 14px, shadow, margin 0 16px 10px
+- Top row: subject color dot (4px wide bar) + subject name (13px weight 600) + due date badge (red if overdue, gold if due today, green if future)
+- Assignment title: 14px weight 600 color #1A1A1A, margin top 6px
+- Assignment description: 12px color #555550 line height 1.5, max 2 lines
+- Teacher name: 11px muted, margin top 4px
+- Bottom row: status chip (Pending/Submitted) + "Mark as Done" button (small, outlined red, border radius 20px)
+- On "Mark as Done" tap: update status to Submitted, chip turns green
+
+Sample homework data:
+1. Mathematics | Mr. Rajan | "Exercise 5.3 — Quadratic Equations" | "Complete problems 1 to 15 from page 98. Show full working." | Due: Tomorrow | Pending
+2. Physics | Ms. Priya | "Lab Report — Ohm's Law" | "Write the complete lab report including observations and conclusions." | Due: Friday | Pending
+3. English | Ms. Anita | "Essay — My Favourite Festival" | "Write a 300-word essay. Focus on descriptive language." | Due: Next Monday | Pending
+4. Chemistry | Mr. Suresh | "Periodic Table Review" | "Memorize first 20 elements with symbols and atomic numbers." | Due: Yesterday | Overdue
+5. Biology | Ms. Kavitha | "Diagram — Human Heart" | "Draw and label the human heart with all four chambers." | Due: Last Week | Submitted
+
+PART C — Admin/Teacher view to post homework:
+- In the admin section add "Post Homework" page
+- Form fields: Subject (dropdown), Title, Description, Due Date (date picker), Class Section
+- Submit button posts to database
+- Same red theme as PostNoticePage
+
+
+----------------------------------------------------------------
+PROMPT 4 — PUSH NOTIFICATIONS
+(Paste this last — most complex)
+----------------------------------------------------------------
+
+Add push notification support to the Emerald International School app.
+
+Use Expo Notifications (expo-notifications library) for this feature.
+
+PART A — Setup:
+- Install and configure expo-notifications
+- On app first launch, ask user permission for notifications
+- Save the device push token to the user's database record (field: pushToken)
+- Handle notifications when app is in foreground, background, and closed state
+
+PART B — Notification triggers:
+1. When admin posts a new notice → send push notification to all users with title = notice title and body = first 100 characters of notice body
+2. When a new homework is posted → send to students in that class section with title "New Homework" and body = subject + assignment title
+3. When fee is overdue (status = overdue) → send reminder notification with title "Fee Reminder" body "Your Q[X] fee is overdue. Please contact school office."
+
+PART C — Notifications settings screen:
+- Add "Notifications" menu item in Profile page (already exists as placeholder, now make it functional)
+- NotificationsSettingsPage:
+  - Toggle switches for each notification type:
+    * New notices (on by default)
+    * New homework (on by default)
+    * Fee reminders (on by default)
+    * Event reminders (on by default)
+  - Each toggle: label on left, Switch widget on right, red color when on
+  - Save preferences to user's database record
+  - "Test Notification" button at bottom — sends a test notification immediately to verify it's working
+
+PART D — Notification badge:
+- Show unread count badge on the Notices bottom nav icon
+- Badge: small red circle with white number, positioned top right of the icon
+- Count = number of notices where current user UID is NOT in the isRead array
+- Update (disappear) when user visits NoticesPage
+
+Use the existing app theme: primary red #C0282A, font Plus Jakarta Sans, border radius 14px for cards.
+Keep all existing screens and features intact — only add new functionality.
+
+================================================================
+HOW TO USE THESE PROMPTS IN REPLIT
+================================================================
+
+1. Open your Replit project
+2. Go to the AI chat box at the bottom ("Make, test, iterate...")
+3. Copy PROMPT 1 completely
+4. Paste it and press Enter
+5. Wait until Replit finishes building (watch the preview update)
+6. Test the new feature in the preview
+7. Only then copy and paste PROMPT 2
+8. Repeat for each prompt in order
+
+IMPORTANT:
+- Never paste two prompts at once
+- If something breaks, type "undo the last change and restore previous version"
+- After all 4 prompts are done, test the full app thoroughly
+- Then click Publish
+
+================================================================
+END OF FEATURE PROMPTS — EMERALD INTERNATIONAL SCHOOL
+================================================================

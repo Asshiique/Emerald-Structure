@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import React from "react";
 import {
   Alert,
+  Linking,
   Platform,
   ScrollView,
   StyleSheet,
@@ -13,6 +14,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
+
+const SCHOOL_PHONE = "+919400000000";
 
 interface MenuItemProps {
   icon: string;
@@ -77,7 +80,7 @@ export default function ProfilePage() {
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: "#F5F4F2" }}
-      contentContainerStyle={{ paddingBottom: bottomPad + 90 }}
+      contentContainerStyle={{ paddingBottom: bottomPad + 100 }}
       showsVerticalScrollIndicator={false}
     >
       <View style={[styles.header, { paddingTop: topPad + 16 }]}>
@@ -101,34 +104,20 @@ export default function ProfilePage() {
 
       <Text style={styles.sectionLabel}>STUDENT INFORMATION</Text>
       <View style={styles.menuCard}>
-        <MenuItem
-          icon="hash"
-          label="Roll Number"
-          value={user?.rollNo ?? "EIS/2024/1024"}
-          showBorder
-        />
-        <MenuItem
-          icon="book-open"
-          label="Class & Section"
-          value={user?.classSection ?? "X-B"}
-          showBorder
-        />
-        <MenuItem
-          icon="users"
-          label="Parent / Guardian"
-          value={user?.parentName ?? "Rajesh Sharma"}
-          showBorder
-        />
-        <MenuItem
-          icon="phone"
-          label="Contact Number"
-          value={user?.phone ?? "+91 98765 43210"}
-          showBorder={false}
-        />
+        <MenuItem icon="hash" label="Roll Number" value={user?.rollNo ?? "EIS/2024/1024"} showBorder />
+        <MenuItem icon="book-open" label="Class & Section" value={user?.classSection ?? "X-B"} showBorder />
+        <MenuItem icon="users" label="Parent / Guardian" value={user?.parentName ?? "Rajesh Sharma"} showBorder />
+        <MenuItem icon="phone" label="Contact Number" value={user?.phone ?? "+91 98765 43210"} showBorder={false} />
       </View>
 
-      <Text style={styles.sectionLabel}>QUICK LINKS</Text>
+      <Text style={styles.sectionLabel}>MY SCHOOL</Text>
       <View style={styles.menuCard}>
+        <MenuItem
+          icon="credit-card"
+          label="My ID Card"
+          onPress={() => router.push("/id-card")}
+          showBorder
+        />
         <MenuItem
           icon="calendar"
           label="Timetable"
@@ -149,9 +138,26 @@ export default function ProfilePage() {
         />
       </View>
 
-      <Text style={styles.sectionLabel}>SUPPORT</Text>
+      <Text style={styles.sectionLabel}>SETTINGS</Text>
       <View style={styles.menuCard}>
-        <MenuItem icon="phone" label="School Office" value="+91 4924 222 001" showBorder />
+        <MenuItem
+          icon="bell"
+          label="Notifications"
+          onPress={() => router.push("/notifications-settings")}
+          showBorder={false}
+        />
+      </View>
+
+      <Text style={styles.sectionLabel}>CONTACT SCHOOL</Text>
+      <View style={styles.menuCard}>
+        <MenuItem
+          icon="phone"
+          label="Call School Office"
+          color="#C0282A"
+          onPress={() => Linking.openURL(`tel:${SCHOOL_PHONE}`)}
+          showBorder
+        />
+        <MenuItem icon="phone" label="Office Number" value="+91 4924 222 001" showBorder />
         <MenuItem icon="mail" label="Email" value="info@emeraldschool.edu" showBorder={false} />
       </View>
 

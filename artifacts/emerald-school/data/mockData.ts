@@ -45,6 +45,16 @@ export interface TimetableDay {
   slots: ScheduleSlot[];
 }
 
+export interface Homework {
+  id: string;
+  subject: string;
+  teacher: string;
+  title: string;
+  description: string;
+  dueLabel: string;
+  status: "pending" | "submitted" | "overdue";
+}
+
 export const NOTICES: Notice[] = [
   {
     id: "n1",
@@ -186,9 +196,56 @@ export const TIMETABLE: TimetableDay[] = [
   },
 ];
 
+export const HOMEWORK: Homework[] = [
+  {
+    id: "hw1",
+    subject: "Mathematics",
+    teacher: "Mr. Rajan",
+    title: "Exercise 5.3 — Quadratic Equations",
+    description: "Complete problems 1 to 15 from page 98. Show full working for each step.",
+    dueLabel: "Tomorrow",
+    status: "pending",
+  },
+  {
+    id: "hw2",
+    subject: "Physics",
+    teacher: "Ms. Priya",
+    title: "Lab Report — Ohm's Law",
+    description: "Write the complete lab report including observations, calculations, and conclusions.",
+    dueLabel: "Friday",
+    status: "pending",
+  },
+  {
+    id: "hw3",
+    subject: "English",
+    teacher: "Ms. Anita",
+    title: "Essay — My Favourite Festival",
+    description: "Write a 300-word essay. Focus on descriptive language and personal experience.",
+    dueLabel: "Next Monday",
+    status: "pending",
+  },
+  {
+    id: "hw4",
+    subject: "Chemistry",
+    teacher: "Mr. Suresh",
+    title: "Periodic Table Review",
+    description: "Memorize the first 20 elements with symbols and atomic numbers. Quiz on Friday.",
+    dueLabel: "Overdue",
+    status: "overdue",
+  },
+  {
+    id: "hw5",
+    subject: "Biology",
+    teacher: "Ms. Nair",
+    title: "Diagram — Human Heart",
+    description: "Draw and label the human heart with all four chambers, valves, and major blood vessels.",
+    dueLabel: "Submitted",
+    status: "submitted",
+  },
+];
+
 export function generateAttendance(): AttendanceDay[] {
   const days: AttendanceDay[] = [];
-  const today = new Date(2025, 0, 17);
   for (let d = 1; d <= 17; d++) {
     const date = new Date(2025, 0, d);
     const dayOfWeek = date.getDay();

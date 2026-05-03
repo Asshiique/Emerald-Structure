@@ -29,6 +29,8 @@ function RootLayoutNav() {
       <Stack.Screen name="notice/[id]" />
       <Stack.Screen name="timetable" />
       <Stack.Screen name="attendance" />
+      <Stack.Screen name="id-card" />
+      <Stack.Screen name="notifications-settings" />
     </Stack>
   );
 }

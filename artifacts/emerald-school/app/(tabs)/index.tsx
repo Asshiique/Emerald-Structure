@@ -2,6 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React from "react";
 import {
+  Linking,
   Platform,
   ScrollView,
   StyleSheet,
@@ -14,6 +15,8 @@ import { ScheduleCard } from "@/components/ScheduleCard";
 import { StatCard } from "@/components/StatCard";
 import { useAuth } from "@/context/AuthContext";
 import { TODAY_SCHEDULE } from "@/data/mockData";
+
+const SCHOOL_PHONE = "+919400000000";
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -34,10 +37,14 @@ export default function HomePage() {
     hour < 12 ? "Good morning," : hour < 17 ? "Good afternoon," : "Good evening,";
   const firstName = user?.name?.split(" ")[0] ?? "Student";
 
+  const handleCall = () => {
+    Linking.openURL(`tel:${SCHOOL_PHONE}`);
+  };
+
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: "#F5F4F2" }}
-      contentContainerStyle={{ paddingBottom: bottomPad + 90 }}
+      contentContainerStyle={{ paddingBottom: bottomPad + 100 }}
       showsVerticalScrollIndicator={false}
     >
       <View style={[styles.header, { paddingTop: topPad + 16 }]}>
@@ -73,6 +80,17 @@ export default function HomePage() {
           <Feather name="chevron-right" size={18} color="#C8972A" />
         </TouchableOpacity>
       </View>
+
+      <TouchableOpacity style={styles.callCard} onPress={handleCall} activeOpacity={0.75}>
+        <View style={styles.callIcon}>
+          <Feather name="phone" size={18} color="#FFFFFF" />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.callTitle}>Call School Office</Text>
+          <Text style={styles.callSub}>Mannarkkad · Available 8AM–4PM</Text>
+        </View>
+        <Feather name="chevron-right" size={18} color="#C0282A" />
+      </TouchableOpacity>
 
       <View style={styles.statsGrid}>
         <StatCard value="92%" label="Attendance" sublabel="This month" />
@@ -151,13 +169,13 @@ export default function HomePage() {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.quickBtn}
-          onPress={() => router.push("/(tabs)/notices")}
+          onPress={() => router.push("/(tabs)/homework")}
           activeOpacity={0.7}
         >
           <View style={styles.quickIcon}>
-            <Feather name="bell" size={20} color="#C0282A" />
+            <Feather name="book" size={20} color="#C0282A" />
           </View>
-          <Text style={styles.quickLabel}>Notices</Text>
+          <Text style={styles.quickLabel}>Homework</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.quickBtn}
@@ -250,6 +268,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(200,151,42,0.25)",
     borderRadius: 14,
     margin: 16,
+    marginBottom: 10,
     padding: 14,
     gap: 12,
   },
@@ -270,6 +289,39 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#7A5A0F",
     marginTop: 1,
+  },
+  callCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    padding: 14,
+    gap: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  callIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#C0282A",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  callTitle: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#1A1A1A",
+  },
+  callSub: {
+    fontSize: 11,
+    color: "#888882",
+    marginTop: 2,
   },
   statsGrid: {
     flexDirection: "row",
