@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -15,6 +16,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
+
+const LOGO = require("../assets/images/logo.jpeg");
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -62,11 +65,9 @@ export default function LoginPage() {
           <View style={styles.circle1} />
           <View style={styles.circle2} />
           <View style={styles.logoContainer}>
-            <View style={styles.shieldIcon}>
-              <Feather name="shield" size={28} color="#FFFFFF" />
+            <View style={styles.logoCard}>
+              <Image source={LOGO} style={styles.logoImage} resizeMode="contain" />
             </View>
-            <Text style={styles.schoolName}>Emerald International School</Text>
-            <Text style={styles.portalLabel}>Parent & Student Portal</Text>
           </View>
         </View>
 
@@ -187,27 +188,23 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: "center",
-    gap: 8,
-  },
-  shieldIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "rgba(255,255,255,0.15)",
-    alignItems: "center",
     justifyContent: "center",
-    marginBottom: 4,
   },
-  schoolName: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    textAlign: "center",
+  logoCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4,
+    alignSelf: "center",
   },
-  portalLabel: {
-    fontSize: 13,
-    color: "rgba(255,255,255,0.7)",
-    textAlign: "center",
+  logoImage: {
+    width: 280,
+    height: 140,
   },
   bottomSection: {
     flex: 1,
