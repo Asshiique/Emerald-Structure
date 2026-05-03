@@ -93,17 +93,11 @@ export interface AppData {
 }
 
 const STORAGE_KEY = "@emerald_app_data";
+const PARENT_LOGIN_KEY = "@emerald_parent_login_done";
 
 const SEED_DATA: AppData = {
   setupComplete: true,
-  settings: {
-    schoolName: "Emerald International School",
-    address: "Mannarkkad, Palakkad, Kerala 678583",
-    phone: "+91 4924 222 001",
-    email: "info@emeraldschool.edu",
-    principalName: "Dr. Thomas Joseph",
-    academicYear: "2024-25",
-  },
+  settings: { schoolName: "Emerald International School", address: "Mannarkkad, Palakkad, Kerala 678583", phone: "+91 4924 222 001", email: "info@emeraldschool.edu", principalName: "Dr. Thomas Joseph", academicYear: "2024-25" },
   firstLoginParents: [],
   staff: [
     { id: "staff_001", name: "Mr. Rajan Krishnan", phone: "+91 98765 11001", email: "rajan@emerald.edu", role: "Class Teacher", department: "Mathematics", classSection: "X-B", joinDate: "2018-06-01", employeeId: "EIS/TCH/018", isActive: true },
@@ -141,34 +135,33 @@ interface DataContextType {
   removeStaff: (id: string) => Promise<void>;
   addStudent: (s: Omit<Student, "id">) => Promise<Student>;
   updateStudent: (id: string, updates: Partial<Student>) => Promise<void>;
+  removeStudent: (id: string) => Promise<void>;
   markAttendance: (rec: Omit<AttendanceRecord, "id">) => Promise<void>;
   getAttendanceForDate: (date: string, classSection: string) => AttendanceRecord | undefined;
   addHomework: (hw: Omit<HomeworkEntry, "id" | "postedAt">) => Promise<HomeworkEntry>;
   addEvaluation: (ev: Omit<Evaluation, "id">) => Promise<void>;
+  updateEvaluation: (id: string, updates: Partial<Evaluation>) => Promise<void>;
   updateSettings: (s: Partial<AppSettings>) => Promise<void>;
   markParentFirstLogin: (email: string) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | null>(null);
-
-function uid() {
-  return Math.random().toString(36).slice(2) + Date.now().toString(36);
-}
-
-async function persist(data: AppData) {
-  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
+function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
+async function persist(data: AppData) { await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
 
 export function DataProvider({ children }: { children: React.ReactNode }) {
   const [data, setData] = useState<AppData>(SEED_DATA);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then((stored) => {
+    Promise.all([AsyncStorage.getItem(STORAGE_KEY), AsyncStorage.getItem(PARENT_LOGIN_KEY)]).then(([stored, parentLogged]) => {
       if (stored) {
         try { setData(JSON.parse(stored)); } catch {}
       } else {
         persist(SEED_DATA);
+      }
+      if (!parentLogged) {
+        AsyncStorage.setItem(PARENT_LOGIN_KEY, JSON.stringify([])).catch(() => {});
       }
       setIsLoading(false);
     });
@@ -183,152 +176,48 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const completeSetup = async (name: string, email: string, phone: string) => {
-    const adminStaff: StaffMember = {
-      id: "staff_admin_" + uid(), name, email, phone,
-      role: "Principal", department: "Administration",
-      classSection: "", joinDate: new Date().toISOString().split("T")[0],
-      employeeId: "EIS/ADM/001", isActive: true,
-    };
-    await update((prev) => ({
-      ...prev,
-      setupComplete: true,
-      staff: [adminStaff, ...prev.staff],
-    }));
+    const adminStaff: StaffMember = { id: "staff_admin_" + uid(), name, email, phone, role: "Principal", department: "Administration", classSection: "", joinDate: new Date().toISOString().split("T")[0], employeeId: "EIS/ADM/001", isActive: true };
+    await update((prev) => ({ ...prev, setupComplete: true, staff: [adminStaff, ...prev.staff] }));
   };
-
-  const addStaff = async (s: Omit<StaffMember, "id" | "isActive">): Promise<StaffMember> => {
-    const member: StaffMember = { ...s, id: "staff_" + uid(), isActive: true };
-    await update((prev) => ({ ...prev, staff: [...prev.staff, member] }));
-    return member;
-  };
-
-  const updateStaff = async (id: string, updates: Partial<StaffMember>) => {
-    await update((prev) => ({
-      ...prev,
-      staff: prev.staff.map((s) => (s.id === id ? { ...s, ...updates } : s)),
-    }));
-  };
-
-  const removeStaff = async (id: string) => {
-    await update((prev) => ({
-      ...prev,
-      staff: prev.staff.map((s) => (s.id === id ? { ...s, isActive: false } : s)),
-    }));
-  };
-
-  const addStudent = async (s: Omit<Student, "id">): Promise<Student> => {
-    const student: Student = { ...s, id: "stu_" + uid() };
-    await update((prev) => ({ ...prev, students: [...prev.students, student] }));
-    return student;
-  };
-
-  const updateStudent = async (id: string, updates: Partial<Student>) => {
-    await update((prev) => ({
-      ...prev,
-      students: prev.students.map((s) => (s.id === id ? { ...s, ...updates } : s)),
-    }));
-  };
-
-  const getAttendanceForDate = (date: string, classSection: string) =>
-    data.attendance.find((a) => a.date === date && a.classSection === classSection);
-
+  const addStaff = async (s: Omit<StaffMember, "id" | "isActive">) => { const member: StaffMember = { ...s, id: "staff_" + uid(), isActive: true }; await update((prev) => ({ ...prev, staff: [...prev.staff, member] })); return member; };
+  const updateStaff = async (id: string, updates: Partial<StaffMember>) => { await update((prev) => ({ ...prev, staff: prev.staff.map((s) => (s.id === id ? { ...s, ...updates } : s)) })); };
+  const removeStaff = async (id: string) => { await update((prev) => ({ ...prev, staff: prev.staff.map((s) => (s.id === id ? { ...s, isActive: false } : s)) })); };
+  const addStudent = async (s: Omit<Student, "id">) => { const student: Student = { ...s, id: "stu_" + uid() }; await update((prev) => ({ ...prev, students: [...prev.students, student] })); return student; };
+  const updateStudent = async (id: string, updates: Partial<Student>) => { await update((prev) => ({ ...prev, students: prev.students.map((s) => (s.id === id ? { ...s, ...updates } : s)) })); };
+  const removeStudent = async (id: string) => { await update((prev) => ({ ...prev, students: prev.students.filter((s) => s.id !== id) })); };
+  const getAttendanceForDate = (date: string, classSection: string) => data.attendance.find((a) => a.date === date && a.classSection === classSection);
   const markAttendance = async (rec: Omit<AttendanceRecord, "id">) => {
     const existing = getAttendanceForDate(rec.date, rec.classSection);
     if (existing) {
-      await update((prev) => ({
-        ...prev,
-        attendance: prev.attendance.map((a) =>
-          a.date === rec.date && a.classSection === rec.classSection
-            ? { ...a, records: rec.records, teacherId: rec.teacherId }
-            : a
-        ),
-      }));
+      await update((prev) => ({ ...prev, attendance: prev.attendance.map((a) => (a.date === rec.date && a.classSection === rec.classSection ? { ...a, records: rec.records, teacherId: rec.teacherId } : a)) }));
     } else {
       const record: AttendanceRecord = { ...rec, id: "att_" + uid() };
       await update((prev) => ({ ...prev, attendance: [...prev.attendance, record] }));
     }
   };
+  const addHomework = async (hw: Omit<HomeworkEntry, "id" | "postedAt">) => { const entry: HomeworkEntry = { ...hw, id: "hw_" + uid(), postedAt: new Date().toISOString() }; await update((prev) => ({ ...prev, homework: [entry, ...prev.homework] })); return entry; };
+  const addEvaluation = async (ev: Omit<Evaluation, "id">) => { const entry: Evaluation = { ...ev, id: "eval_" + uid() }; await update((prev) => ({ ...prev, evaluations: [entry, ...prev.evaluations] })); };
+  const updateEvaluation = async (id: string, updates: Partial<Evaluation>) => { await update((prev) => ({ ...prev, evaluations: prev.evaluations.map((e) => (e.id === id ? { ...e, ...updates } : e)) })); };
+  const updateSettings = async (s: Partial<AppSettings>) => { await update((prev) => ({ ...prev, settings: { ...prev.settings, ...s } })); };
+  const markParentFirstLogin = async (email: string) => { await update((prev) => ({ ...prev, firstLoginParents: prev.firstLoginParents.includes(email) ? prev.firstLoginParents : [...prev.firstLoginParents, email] })); };
 
-  const addHomework = async (hw: Omit<HomeworkEntry, "id" | "postedAt">): Promise<HomeworkEntry> => {
-    const entry: HomeworkEntry = { ...hw, id: "hw_" + uid(), postedAt: new Date().toISOString() };
-    await update((prev) => ({ ...prev, homework: [entry, ...prev.homework] }));
-    return entry;
-  };
-
-  const addEvaluation = async (ev: Omit<Evaluation, "id">) => {
-    const entry: Evaluation = { ...ev, id: "eval_" + uid() };
-    await update((prev) => ({ ...prev, evaluations: [entry, ...prev.evaluations] }));
-  };
-
-  const updateSettings = async (s: Partial<AppSettings>) => {
-    await update((prev) => ({ ...prev, settings: { ...prev.settings, ...s } }));
-  };
-
-  const markParentFirstLogin = async (email: string) => {
-    await update((prev) => ({
-      ...prev,
-      firstLoginParents: [...prev.firstLoginParents, email],
-    }));
-  };
-
-  return (
-    <DataContext.Provider value={{
-      data, isLoading,
-      completeSetup, addStaff, updateStaff, removeStaff,
-      addStudent, updateStudent,
-      markAttendance, getAttendanceForDate,
-      addHomework, addEvaluation, updateSettings, markParentFirstLogin,
-    }}>
-      {children}
-    </DataContext.Provider>
-  );
+  return <DataContext.Provider value={{ data, isLoading, completeSetup, addStaff, updateStaff, removeStaff, addStudent, updateStudent, removeStudent, markAttendance, getAttendanceForDate, addHomework, addEvaluation, updateEvaluation, updateSettings, markParentFirstLogin }}>{children}</DataContext.Provider>;
 }
 
-export function useData() {
-  const ctx = useContext(DataContext);
-  if (!ctx) throw new Error("useData must be used within DataProvider");
-  return ctx;
-}
-
+export function useData() { const ctx = useContext(DataContext); if (!ctx) throw new Error("useData must be used within DataProvider"); return ctx; }
 export async function findAccountByEmail(email: string) {
   try {
     const stored = await AsyncStorage.getItem(STORAGE_KEY);
     const appData: AppData = stored ? JSON.parse(stored) : SEED_DATA;
     const normalized = email.toLowerCase().trim();
-
-    const staffMember = appData.staff.find(
-      (s) => s.email.toLowerCase() === normalized && s.isActive
-    );
+    const staffMember = appData.staff.find((s) => s.email.toLowerCase() === normalized && s.isActive);
     if (staffMember) {
       const isAdmin = staffMember.role === "Principal" || staffMember.role === "Vice Principal";
-      return {
-        uid: staffMember.id,
-        name: staffMember.name,
-        role: isAdmin ? ("admin" as const) : ("teacher" as const),
-        classSection: staffMember.classSection,
-        rollNo: staffMember.employeeId,
-        parentName: "",
-        phone: staffMember.phone,
-        email: staffMember.email,
-        department: staffMember.department,
-      };
+      return { uid: staffMember.id, name: staffMember.name, role: isAdmin ? ("admin" as const) : ("teacher" as const), classSection: staffMember.classSection, rollNo: staffMember.employeeId, parentName: "", phone: staffMember.phone, email: staffMember.email, department: staffMember.department };
     }
-
-    const student = appData.students.find(
-      (s) => s.parentEmail.toLowerCase() === normalized
-    );
+    const student = appData.students.find((s) => s.parentEmail.toLowerCase() === normalized);
     if (student) {
-      return {
-        uid: student.id,
-        name: student.name,
-        role: "parent" as const,
-        classSection: student.classSection,
-        rollNo: student.admissionNo,
-        parentName: student.parentName,
-        phone: student.parentPhone,
-        email: student.parentEmail,
-        department: "",
-      };
+      return { uid: student.id, name: student.name, role: "parent" as const, classSection: student.classSection, rollNo: student.admissionNo, parentName: student.parentName, phone: student.parentPhone, email: student.parentEmail, department: "" };
     }
   } catch {}
   return null;
