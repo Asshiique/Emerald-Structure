@@ -1,0 +1,513 @@
+================================================================
+EMERALD INTERNATIONAL SCHOOL
+Complete copy-paste prompts for each screen and setup step
+================================================================
+
+
+----------------------------------------------------------------
+PROMPT 1 — THEME & COLOR SETUP
+(Use in: FlutterFlow → Theme Settings → paste in AI or manually)
+----------------------------------------------------------------
+
+Set up the app theme for a school app called "Emerald International School" with the following exact settings:
+
+Primary color: #C0282A (deep red)
+Primary dark: #8B1A1B
+Primary light: #F8EBEB
+Accent color: #C8972A (gold)
+Accent light: #FFF8EC
+Background: #F5F4F2
+Card/surface: #FFFFFF
+Text primary: #1A1A1A
+Text secondary: #555550
+Text muted: #888882
+Border color: rgba(0,0,0,0.08)
+
+Font: Plus Jakarta Sans (from Google Fonts)
+Font weights to use: 400 (regular), 500 (medium), 700 (bold)
+
+Border radius for cards: 14px
+Border radius for buttons and small elements: 8px
+Box shadow: 0 2px 16px rgba(0,0,0,0.06)
+
+The app is a school management app for parents and students in Kerala, India.
+Target platform: Android mobile (primary), iOS (secondary).
+
+
+----------------------------------------------------------------
+PROMPT 2 — FIREBASE COLLECTIONS SETUP
+(Use in: FlutterFlow → Firestore → Create Collection → AI Gen)
+----------------------------------------------------------------
+
+Create the following Firestore collections for a school management app:
+
+COLLECTION 1: users
+Fields:
+* uid (String) — Firebase Auth UID
+* name (String) — full name
+* role (String) — values: parent, student, teacher, admin
+* classSection (String) — example: X-B
+* rollNo (String) — example: EIS/2024/1024
+* parentName (String)
+* phone (String)
+* email (String)
+* profilePhoto (String) — image URL
+* createdAt (Timestamp)
+
+COLLECTION 2: notices
+Fields:
+* title (String)
+* body (String)
+* category (String) — values: Academic, Events, Fees, Sports, General
+* isRead (List of Strings) — list of user UIDs who have read it
+* postedBy (String) — admin UID
+* targetRole (String) — values: all, parent, student, teacher
+* createdAt (Timestamp)
+
+COLLECTION 3: marks
+Fields:
+* studentId (String) — UID of student
+* subject (String)
+* score (Integer)
+* totalMarks (Integer)
+* examType (String) — values: Unit Test, Term Exam, Final
+* term (String) — values: Term 1, Term 2, Term 3
+* date (Timestamp)
+
+COLLECTION 4: attendance
+Fields:
+* studentId (String)
+* date (Timestamp)
+* status (String) — values: present, absent, late
+* markedBy (String) — teacher UID
+* classSection (String)
+
+COLLECTION 5: fees
+Fields:
+* studentId (String)
+* quarter (String) — values: Q1, Q2, Q3, Annual
+* amount (Integer)
+* status (String) — values: paid, pending, overdue
+* paidOn (Timestamp)
+* receiptNo (String)
+* dueDate (Timestamp)
+
+COLLECTION 6: timetable
+Fields:
+* classSection (String)
+* day (String) — values: Monday, Tuesday, Wednesday, Thursday, Friday
+* slots (List) — each slot has: time (String), subject (String), teacherName (String)
+
+
+----------------------------------------------------------------
+PROMPT 3 — SPLASH SCREEN
+(Use in: FlutterFlow → Pages → SplashScreen → AI Gen)
+----------------------------------------------------------------
+
+Create a splash screen for a school app with these exact specifications:
+
+Background color: #C0282A (red)
+Layout: centered vertically and horizontally, full screen
+
+Elements from top to bottom:
+1. School crest/shield icon in white (use Icon widget, shield or school icon, size 80px)
+2. Text "EMERALD" — font Plus Jakarta Sans, size 28px, weight 700, color white, letter spacing 0.15em
+3. Text "International School" — font Plus Jakarta Sans, size 14px, weight 400, color white with 75% opacity, margin top 4px
+4. Text "Mannarkkad, Kerala" — font Plus Jakarta Sans, size 11px, weight 400, color white with 50% opacity, margin top 6px
+
+Add a Timer action: after 2500 milliseconds, check if user is logged in.
+* If logged in → navigate to HomePage
+* If not logged in → navigate to LoginPage
+
+No back button. No app bar.
+
+
+----------------------------------------------------------------
+PROMPT 4 — LOGIN PAGE
+(Use in: FlutterFlow → Pages → LoginPage → AI Gen)
+----------------------------------------------------------------
+
+Create a login page for a school app called Emerald International School with these specifications:
+
+Top section (40% of screen height):
+* Background color #C0282A (red)
+* School name "Emerald International School" in white, Plus Jakarta Sans, 22px, weight 600
+* Subtitle "Parent & Student Portal" in white at 70% opacity, 13px
+* Small decorative circle in top right corner: 120px, rgba(255,255,255,0.08)
+
+Bottom section (60% of screen height):
+* Background white
+* Border radius top left and top right: 24px
+* Padding: 28px horizontal
+
+Form elements inside bottom section:
+1. Text "Welcome back" — 20px, weight 700, color #1A1A1A, margin bottom 4px
+2. Text "Sign in to continue" — 13px, color #888882, margin bottom 24px
+3. TextField for Email — label "Email address", border radius 10px, border color rgba(0,0,0,0.12), filled background #F5F4F2
+4. TextField for Password — label "Password", obscure text enabled, same style as above, margin top 12px
+5. Row with Spacer and "Forgot password?" text button in color #C0282A — margin top 8px
+6. ElevatedButton "Sign In" — full width, height 50px, background #C0282A, text white, font weight 600, border radius 12px, margin top 20px
+7. Divider with "or" text — margin top 20px
+8. OutlinedButton "Sign in with Google" — full width, height 50px, border color rgba(0,0,0,0.15), text #1A1A1A, margin top 12px
+
+Add a Row at the bottom:
+* Text "New to Emerald?" color #888882, size 13px
+* TextButton "Contact school office" color #C0282A, size 13px
+
+Actions:
+* Sign In button → Firebase Auth email login → on success navigate to HomePage
+* Google button → Firebase Auth Google sign in → on success navigate to HomePage
+
+
+----------------------------------------------------------------
+PROMPT 5 — HOME PAGE
+(Use in: FlutterFlow → Pages → HomePage → AI Gen)
+----------------------------------------------------------------
+
+Create a home dashboard page for a school app. This is the main screen seen by parents and students after login.
+
+Page background: #F5F4F2
+No floating action button.
+Bottom navigation bar with 5 items: Home (active), Notices, Progress, Fees, Profile.
+
+SECTION 1 — Top header bar:
+* Background #C0282A (red)
+* Padding: top 52px (safe area), bottom 18px, horizontal 20px
+* Two decorative circles using Container widgets with rgba(255,255,255,0.06) background — one 160px top right, one 100px bottom left — positioned with Stack
+* Row with:
+  Left: Column with
+    - Text "Emerald International School" — 10px, white, opacity 70%, letter spacing 0.1em
+    - Text "Good morning," + logged-in user's name — 22px, white, weight 700 (use Playfair Display or Georgia font)
+    - Text "Class X-B · Roll No. 24" — 12px, white, opacity 75%
+  Right: CircleAvatar — 38px, background rgba(255,255,255,0.2), border 1.5px white at 35% opacity, initials from user name
+
+SECTION 2 — Notice banner (below header, inside scrollable content):
+* Container: background #FFF8EC, border 1px solid rgba(200,151,42,0.25), border radius 14px, margin 14px horizontal 16px
+* Row: bell icon in #C8972A rounded square (28px, border radius 6px) + Column with title "Annual Day – Tarang 2025" in #8B6010 13px weight 600, and body text in #7A5A0F 12px
+
+SECTION 3 — Stats grid:
+* 2-column grid, gap 10px, margin horizontal 16px, margin top 14px
+* StatCard 1: large text "92%" in #C0282A 26px weight 700, label "Attendance" muted 11px, sublabel "This month" muted 10px
+* StatCard 2: large text "87" in #C0282A, label "Avg. Marks", sublabel "Last exam"
+* Each card: white background, border radius 14px, shadow 0 2px 16px rgba(0,0,0,0.06), padding 14px
+
+SECTION 4 — Today's Schedule:
+* Section label "Today's Schedule" — 11px uppercase, letter spacing 0.08em, muted color, padding 18px 20px 8px
+* Horizontal scrollable ListView, padding horizontal 16px, gap 10px
+* Each ScheduleCard: white card 120px wide, border radius 14px, padding 12px 14px, shadow
+  Fields: time (10px muted), subject (13px weight 600), teacher name (10px muted)
+  Active card (current class): background #C0282A, all text white
+* Sample data: 8:00 AM Mathematics Mr. Rajan | 9:00 AM Physics Ms. Priya (active) | 10:00 AM English Ms. Anita | 11:15 AM Chemistry Mr. Suresh
+
+SECTION 5 — Upcoming card:
+* Section label "Upcoming"
+* White card, border radius 14px, shadow, margin horizontal 16px
+* Row: left side has badge "Exam" (background #F8EBEB, text #C0282A, border radius 4px, font 10px weight 600) then title "Unit Test — Science" (14px weight 600) then date "Friday, 14 Feb · 10:00 AM" (12px muted)
+* Right side: date block — small box showing "14" large and "FEB" small, background #F8EBEB, text #C0282A, border radius 8px, 42x42px
+* Below that row: badge "JEE Prep" in gold colors + text "Extra class Saturday" muted 12px
+
+Connect all user-specific data (name, class, roll number) to the logged-in user's Firestore document.
+Connect attendance % and average marks via Firestore queries on the attendance and marks collections filtered by studentId = current user UID.
+
+
+----------------------------------------------------------------
+PROMPT 6 — NOTICES PAGE
+(Use in: FlutterFlow → Pages → NoticesPage → AI Gen)
+----------------------------------------------------------------
+
+Create a notices page for a school app with the following layout:
+
+Page background: #F5F4F2
+App bar: same red header style as HomePage, title "Notices", with a small pill showing unread count (white pill, red text, top right of header).
+
+Below header: horizontal scrollable chip row for filtering:
+* Chips: All (selected by default), Academic, Events, Fees, Sports
+* Selected chip: background #C0282A, text white, border radius 20px
+* Unselected chip: white background, border rgba(0,0,0,0.08), text #555550
+* Margin: horizontal 16px, vertical 10px
+
+Main content: white card (border radius 14px, shadow, margin 0 16px) containing a ListView of notice items.
+
+Each notice item in the ListView:
+* Padding 14px 16px
+* Bottom border 0.5px rgba(0,0,0,0.08) (except last item)
+* Row: colored dot (8px circle) + Column
+* Dot is #C0282A for unread, rgba(0,0,0,0.08) for read
+* Column contains:
+  1. Category badge (small pill): Urgent = red bg #F8EBEB text #C0282A | Event = gold bg text | Academic = green bg text | General = gray bg text
+  2. Notice title — 13px weight 600 color #1A1A1A
+  3. Notice body — 12px color #555550 line height 1.5 (max 2 lines, overflow ellipsis)
+  4. Time text — 10px color #888882 margin top 5px
+
+Sample notices to show as placeholder:
+1. Urgent | "Fee Payment Reminder — Q3" | "Last date for fee payment is 20th January. Late payments attract a penalty of ₹200." | Today · 9:12 AM | unread
+2. Event | "Tarang 2025 — Annual Day" | "Rehearsals start Monday. Costume list shared separately. All participants must confirm." | Yesterday · 4:30 PM | unread
+3. Academic | "NEET Foundation — New Batch" | "New NEET foundation batch begins for Class X students. Register with the office by Friday." | Jan 10 · 11:00 AM | unread
+4. General | "Holiday — Pongal" | "School will remain closed on 14th and 15th January on account of Pongal." | Jan 9 · 8:00 AM | read
+5. Sports | "Inter-School Football Tournament" | "Our team plays on 18th Jan. Students are encouraged to support the team." | Jan 8 · 3:00 PM | read
+
+Connect to Firestore: query the "notices" collection, order by createdAt descending.
+Filter chips should filter by the "category" field.
+On tap of any notice item → navigate to NoticeDetailPage passing the notice document reference.
+On tap → update the notice document's isRead array to include current user's UID.
+
+
+----------------------------------------------------------------
+PROMPT 7 — PROGRESS PAGE
+(Use in: FlutterFlow → Pages → ProgressPage → AI Gen)
+----------------------------------------------------------------
+
+Create a student progress page for a school app.
+
+Page background: #F5F4F2
+Header: same red style as other pages, title "My Progress", subtitle "Term 2 · 2024–25"
+
+SECTION 1 — Attendance card:
+* White card, border radius 14px, shadow, margin 14px 16px
+* Row with two sides:
+  Left side:
+    - Large number "92%" in #C0282A, 32px weight 700
+    - Label "Present this term" — 12px color #555550
+    - Sublabel "138 / 150 days" — 11px color #888882
+  Right side:
+    - Circular progress indicator, 72px diameter
+    - Background circle: color #F0F0EE, stroke width 7
+    - Progress circle: color #C0282A, stroke width 7, value 0.92 (92%)
+    - Center text "92" — 14px weight 700 color #C0282A
+
+SECTION 2 — Subject performance:
+* Section label "Subject Performance"
+* White card, border radius 14px, shadow, margin 0 16px
+* ListView of subject rows, each row:
+  - Padding 12px 16px
+  - Bottom border 0.5px
+  - Row: colored vertical bar (4px wide, 36px tall, border radius 4px) + Column (subject name 13px weight 600, teacher name 11px muted) + right-aligned mark (number 18px weight 700 #C0282A, "/100" 10px muted below)
+
+Subject data:
+* Mathematics | Mr. Rajan Kumar | 94 — bar color #C0282A
+* Physics | Ms. Priya Menon | 88 — bar color #E24B4A
+* Chemistry | Mr. Suresh Nair | 82 — bar color #C8972A
+* Biology | Ms. Kavitha | 91 — bar color #2D6E2D
+* English | Ms. Anita Thomas | 79 — bar color #185FA5
+
+SECTION 3 — Teacher's remark:
+* Section label "Teacher's Remark"
+* White card, border radius 14px, shadow, margin 0 16px, padding 14px 16px
+* Italic text in #555550, 13px, line height 1.6:
+  "Arjun shows excellent aptitude in Sciences. Needs to focus slightly more on English writing skills. Overall a very promising student — keep it up!"
+* Below: teacher attribution "— Class Teacher, Term 2 Report" in #888882, 11px, margin top 10px
+
+Connect to Firestore:
+* Attendance: query attendance collection where studentId = current user UID, calculate % present
+* Marks: query marks collection where studentId = current user UID, display each subject's latest score
+
+
+----------------------------------------------------------------
+PROMPT 8 — FEES PAGE
+(Use in: FlutterFlow → Pages → FeesPage → AI Gen)
+----------------------------------------------------------------
+
+Create a fees page for a school app.
+
+Page background: #F5F4F2
+NO standard app bar. Instead use a custom red header:
+
+Custom header:
+* Background #C0282A, padding top 52px bottom 0, horizontal 20px
+* Text "Amount Due" — 11px white opacity 70%, uppercase letter spacing 0.06em
+* Text "₹4,200" — 36px white weight 600 (use serif font or Georgia)
+* Text "Q3 Tuition Fee · Due by 20 Jan 2025" — 12px white opacity 75%
+* White button "Pay Now" — width full minus 40px margin, height 50px, background white, text #C0282A weight 700, border radius 14px, shadow, margin top 16px margin bottom 0
+
+Below header: scrollable content
+
+SECTION 1 — Payment history:
+* Section label "Payment History" — 11px uppercase muted, padding 18px 20px 8px
+* White card, border radius 14px, shadow, margin 0 16px
+* ListView of fee history rows, each row:
+  - Padding 13px 16px, bottom border 0.5px (no border on last row)
+  - Row: left Column (quarter+year name 13px weight 500, paid date + receipt no 11px muted) + right text (amount, green #2D6E2D for paid, red #C0282A for pending)
+
+History data:
+* Q2 · Oct–Dec 2024 | Paid on 3 Oct · Receipt #4821 | ₹4,200 (paid, green)
+* Q1 · Jul–Sep 2024 | Paid on 5 Jul · Receipt #3974 | ₹4,200 (paid, green)
+* Annual Fee 2024–25 | Paid on 12 Jun · Receipt #3820 | ₹12,000 (paid, green)
+
+SECTION 2 — Fee structure:
+* Section label "Fee Structure"
+* White card, border radius 14px, shadow, margin 0 16px
+* Three rows same style as above (no status color — just show amount in #1A1A1A):
+  - Tuition (Quarterly) | ₹4,200
+  - Annual Fee | ₹12,000
+  - Abacus Program | ₹1,500
+
+Connect to Firestore:
+* Query fees collection where studentId = current user UID
+* Show pending/overdue fee at top as the "Amount Due"
+* Show all paid fees as history
+* Pay Now button: for Phase 1 show a dialog "Please contact school office to pay. Phone: [school number]"
+
+
+----------------------------------------------------------------
+PROMPT 9 — PROFILE PAGE
+(Use in: FlutterFlow → Pages → ProfilePage → AI Gen)
+----------------------------------------------------------------
+
+Create a profile page for a school app.
+
+Page background: #F5F4F2
+No standard app bar.
+
+SECTION 1 — Profile hero:
+* Background #C0282A (red), padding top 52px bottom 30px
+* Centered column layout
+* CircleAvatar: 72px, background rgba(255,255,255,0.2), border 2px white at 40% opacity, show initials from user name, font size 26px white weight 700
+* Name text — 18px white weight 700, margin top 12px
+* Class text — 12px white opacity 75%, margin top 4px
+* Student ID — 11px white opacity 55%, letter spacing 0.05em, margin top 3px
+
+SECTION 2 — Account section:
+* Section label "Account" below hero
+* White card, border radius 14px, shadow, margin 0 16px
+* Two menu items:
+  Each menu item: Row with icon box (36x36px, border radius 8px, background #F8EBEB, icon 16px in #C0282A) + text (14px weight 500 #1A1A1A, flex 1) + arrow chevron (color #888882)
+  Item 1: person icon | "My Profile"
+  Item 2: group icon | "Parent / Guardian"
+  Bottom border between items: 0.5px rgba(0,0,0,0.08)
+
+SECTION 3 — Preferences section:
+* Section label "Preferences"
+* White card, border radius 14px, shadow, margin 0 16px
+* Two menu items:
+  Item 1: bell icon | "Notifications"
+  Item 2: language/globe icon | "Language — English"
+
+SECTION 4 — About section:
+* Section label "About"
+* White card, border radius 14px, shadow, margin 0 16px
+* Two menu items:
+  Item 1: info icon | "About the School" | on tap → show dialog with school description: "Emerald International School, Mannarkkad, Kerala. A future-ready school focused on academic excellence, skill development, and character building."
+  Item 2: logout icon in #C0282A background #FEF0F0 | "Sign Out" text in #C0282A | on tap → Firebase Auth sign out → navigate to LoginPage, clear navigation stack
+
+Footer text: "Emerald International School App · v1.0" — centered, 11px, muted color, padding 20px
+
+Connect all profile data to current logged-in user's Firestore document (users collection).
+
+
+----------------------------------------------------------------
+PROMPT 10 — ADMIN POST NOTICE PAGE
+(Use in: FlutterFlow → Pages → PostNoticePage → AI Gen)
+----------------------------------------------------------------
+
+Create a page for school admin to post new notices. This page is only visible to users where role == admin.
+
+Page background: #F5F4F2
+App bar: red background #C0282A, title "Post Notice" in white, back arrow in white
+
+Form content (scrollable, padding 20px):
+
+1. Section label "Notice Details" — 11px uppercase muted
+
+2. TextField — label "Notice Title", hint "e.g. Fee Payment Reminder", border radius 10px, filled background #F5F4F2, border color rgba(0,0,0,0.12)
+
+3. TextField — label "Notice Body", hint "Write the full notice here...", maxLines 5, same style, margin top 12px
+
+4. Section label "Category" — margin top 20px
+
+5. DropdownButton — options: General, Academic, Events, Fees, Sports, Urgent
+   Style: full width, border radius 10px, filled background #F5F4F2
+
+6. Section label "Send To" — margin top 20px
+
+7. ChoiceChips row — options: All, Parents, Students, Teachers
+   Selected chip: background #C0282A text white
+   Unselected: white background, border
+
+8. ElevatedButton "Post Notice" — full width, height 52px, background #C0282A, text white weight 600, border radius 12px, margin top 28px
+
+Actions on Post Notice button:
+* Validate that title and body are not empty
+* Write to Firestore notices collection:
+  title: from title field
+  body: from body field
+  category: from dropdown
+  targetRole: from choice chip selection
+  postedBy: current user UID
+  isRead: empty list
+  createdAt: current timestamp
+* On success: show snackbar "Notice posted successfully" + navigate back
+* On error: show snackbar "Failed to post. Try again."
+
+
+----------------------------------------------------------------
+PROMPT 11 — NOTICE DETAIL PAGE
+(Use in: FlutterFlow → Pages → NoticeDetailPage → AI Gen)
+----------------------------------------------------------------
+
+Create a notice detail page that receives a Firestore document reference as a page parameter called "noticeRef".
+
+Page background: #F5F4F2
+App bar: red background #C0282A, title "Notice" in white, back arrow in white
+
+Content (scrollable, padding 20px top 16px):
+
+1. Category badge pill — dynamically colored based on category field:
+   Urgent: background #F8EBEB text #C0282A
+   Event: background #FFF8EC text #8B6010
+   Academic: background #EAF3DE text #27500A
+   Default: background #F1EFE8 text #444441
+   Font 11px weight 600, padding 4px 12px, border radius 20px
+
+2. Notice title — 20px weight 700 color #1A1A1A, margin top 10px, line height 1.3
+
+3. Row with clock icon + posted date/time — 12px muted, margin top 8px
+
+4. Divider — margin top 16px bottom 16px, color rgba(0,0,0,0.08)
+
+5. Notice body text — 14px color #555550 line height 1.7
+
+6. Divider — margin top 24px
+
+7. Text "Posted by School Administration" — 12px muted, centered
+
+Bind all fields to the noticeRef document passed as parameter.
+On page load: update the isRead array in this notice document to include current user UID (using arrayUnion).
+
+
+----------------------------------------------------------------
+GENERAL TIPS FOR USING THESE PROMPTS IN FLUTTERFLOW
+----------------------------------------------------------------
+
+1. Always set up Theme (Prompt 1) and Firebase Collections (Prompt 2) BEFORE generating any pages.
+
+2. When using AI Gen in FlutterFlow:
+   - Open the page
+   - Click the wand/AI icon
+   - Paste the prompt
+   - Click Generate
+   - Review and adjust — AI won't be 100% perfect, fix small things manually
+
+3. After generating each page, immediately preview it on mobile to check layout.
+
+4. Build and test in this order:
+   Splash → Login → HomePage → NoticesPage → NoticeDetail → ProgressPage → FeesPage → ProfilePage → PostNoticePage
+
+5. For Firestore queries in each page:
+   - Go to the ListView widget
+   - Set Backend Query → Firestore Collection
+   - Choose the correct collection
+   - Add filter: field "studentId" equals AppState.currentUserUID
+
+6. To restrict admin pages:
+   - Add a Conditional widget at the top of admin pages
+   - Condition: currentUserDocument.role == "admin"
+   - If false: show "Access denied" text or redirect to HomePage
+
+7. Test with real data before publishing:
+   - Manually add 3 test student documents in Firebase Console
+   - Add 5 sample notices
+   - Log in as different roles and verify each screen shows correct data
+
+================================================================
+END OF PROMPTS — EMERALD INTERNATIONAL SCHOOL APP
+================================================================

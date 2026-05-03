@@ -1,0 +1,226 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+.wrap { padding: 1rem 0 2rem; font-family: var(--font-sans); }
+.tab-row { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+.tab { font-size: 12px; font-weight: 500; padding: 6px 14px; border-radius: 20px; border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); color: var(--color-text-secondary); cursor: pointer; }
+.tab.on { background: #C0282A; border-color: #C0282A; color: white; }
+.panel { display: none; }
+.panel.on { display: block; }
+.sec { font-size: 10px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--color-text-tertiary); margin: 18px 0 8px; }
+.row { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 11px 14px; margin-bottom: 7px; display: flex; gap: 12px; align-items: flex-start; }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+.dot-red { background: #C0282A; }
+.dot-amber { background: #BA7517; }
+.dot-blue { background: #185FA5; }
+.dot-green { background: #3B6D11; }
+.dot-gray { background: #888780; }
+.rt { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+.rs { font-size: 12px; color: var(--color-text-secondary); margin-top: 3px; line-height: 1.5; }
+.tag { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px; margin-top: 5px; margin-right: 3px; }
+.t-red { background: #FCEBEB; color: #791F1F; }
+.t-blue { background: #E6F1FB; color: #0C447C; }
+.t-green { background: #EAF3DE; color: #27500A; }
+.t-amber { background: #FAEEDA; color: #633806; }
+.t-gray { background: #F1EFE8; color: #444441; }
+.step-num { width: 22px; height: 22px; border-radius: 50%; background: #C0282A; color: white; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+.code { font-family: var(--font-mono); font-size: 11px; background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: 6px; padding: 8px 10px; margin-top: 6px; color: var(--color-text-primary); line-height: 1.6; }
+.divider { height: 0.5px; background: var(--color-border-tertiary); margin: 14px 0; }
+.tip { background: #FAEEDA; border-radius: var(--border-radius-md); padding: 10px 12px; margin-top: 8px; }
+.tip-t { font-size: 12px; font-weight: 600; color: #633806; }
+.tip-b { font-size: 11px; color: #854F0B; margin-top: 3px; line-height: 1.5; }
+</style>
+
+<div class="wrap">
+  <h2 class="sr-only">FlutterFlow structure guide for Emerald School app</h2>
+
+  <div class="tab-row">
+    <div class="tab on" onclick="show('pages',this)">Pages</div>
+    <div class="tab" onclick="show('firebase',this)">Firebase</div>
+    <div class="tab" onclick="show('widgets',this)">Widgets</div>
+    <div class="tab" onclick="show('steps',this)">Build order</div>
+  </div>
+
+  <div class="panel on" id="p-pages">
+    <div class="sec">Auth pages (build first)</div>
+    <div class="row"><div class="dot dot-red"></div><div><div class="rt">SplashScreen</div><div class="rs">School logo + name, auto-navigates after 2s. Check if user is logged in → redirect.</div><span class="tag t-red">1 page</span></div></div>
+    <div class="row"><div class="dot dot-red"></div><div><div class="rt">LoginPage</div><div class="rs">Phone number or email login. Role selector: Parent / Student / Teacher / Admin.</div><span class="tag t-red">Firebase Auth</span></div></div>
+    <div class="row"><div class="dot dot-red"></div><div><div class="rt">RoleSelectPage</div><div class="rs">After login, user picks role. Stored in Firestore user document. Routes to correct NavBar.</div><span class="tag t-amber">One-time</span></div></div>
+
+    <div class="sec">Main pages (bottom nav)</div>
+    <div class="row"><div class="dot dot-red"></div><div><div class="rt">HomePage</div><div class="rs">Dashboard. Greeting, stats row (attendance %, avg marks), today's schedule ListView, notice banner, upcoming card.</div><span class="tag t-red">Complex</span><span class="tag t-blue">Queries: 3</span></div></div>
+    <div class="row"><div class="dot dot-amber"></div><div><div class="rt">NoticesPage</div><div class="rs">ListView of notices from Firestore. Filter chips (All / Academic / Events / Fees). Unread badge count.</div><span class="tag t-amber">Medium</span></div></div>
+    <div class="row"><div class="dot dot-amber"></div><div><div class="rt">ProgressPage</div><div class="rs">Attendance circle, subject marks list, teacher remark. Data from student document + marks collection.</div><span class="tag t-amber">Medium</span></div></div>
+    <div class="row"><div class="dot dot-green"></div><div><div class="rt">FeesPage</div><div class="rs">Due amount, payment history ListView, fee structure. Phase 2: payment gateway.</div><span class="tag t-green">Simple</span></div></div>
+    <div class="row"><div class="dot dot-green"></div><div><div class="rt">ProfilePage</div><div class="rs">Student info, menu items, sign out button. Reads from currentUser Firestore doc.</div><span class="tag t-green">Simple</span></div></div>
+
+    <div class="sec">Detail pages (navigate to from main pages)</div>
+    <div class="row"><div class="dot dot-gray"></div><div><div class="rt">NoticeDetailPage</div><div class="rs">Full notice text, date, category badge. Receives notice document ref as parameter.</div></div></div>
+    <div class="row"><div class="dot dot-gray"></div><div><div class="rt">AttendancePage</div><div class="rs">Monthly calendar view showing present/absent days. Navigate from ProgressPage.</div></div></div>
+    <div class="row"><div class="dot dot-gray"></div><div><div class="rt">TimetablePage</div><div class="rs">Weekly schedule grid. Day chips at top, classes listed below.</div></div></div>
+    <div class="row"><div class="dot dot-gray"></div><div><div class="rt">FeeReceiptPage</div><div class="rs">Individual receipt detail. PDF download option in Phase 2.</div></div></div>
+
+    <div class="sec">Admin-only pages</div>
+    <div class="row"><div class="dot dot-blue"></div><div><div class="rt">AdminDashboard</div><div class="rs">Total students, fee collection stats, quick actions. Visible only when role == admin.</div></div></div>
+    <div class="row"><div class="dot dot-blue"></div><div><div class="rt">PostNoticePage</div><div class="rs">Form to create new notice. Title, body, category dropdown, send button → writes to Firestore.</div></div></div>
+    <div class="row"><div class="dot dot-blue"></div><div><div class="rt">ManageStudentsPage</div><div class="rs">ListView of all students. Tap to edit profile, update marks, toggle attendance.</div></div></div>
+  </div>
+
+  <div class="panel" id="p-firebase">
+    <div class="sec">Firestore collections</div>
+    <div class="row"><div class="dot dot-red"></div><div>
+      <div class="rt">users</div>
+      <div class="code">uid, name, role, classSection,<br>rollNo, parentName, phone, email,<br>profilePhoto, createdAt</div>
+      <span class="tag t-red">1 doc per user</span>
+    </div></div>
+    <div class="row"><div class="dot dot-red"></div><div>
+      <div class="rt">notices</div>
+      <div class="code">title, body, category, isRead[ ],<br>postedBy, createdAt, targetRole</div>
+      <span class="tag t-amber">Admin writes</span><span class="tag t-green">All read</span>
+    </div></div>
+    <div class="row"><div class="dot dot-amber"></div><div>
+      <div class="rt">marks</div>
+      <div class="code">studentId, subject, score,<br>totalMarks, examType, term, date</div>
+      <span class="tag t-blue">Subcollection under users</span>
+    </div></div>
+    <div class="row"><div class="dot dot-amber"></div><div>
+      <div class="rt">attendance</div>
+      <div class="code">studentId, date, status (present/<br>absent/late), markedBy, classId</div>
+      <span class="tag t-blue">Daily records</span>
+    </div></div>
+    <div class="row"><div class="dot dot-green"></div><div>
+      <div class="rt">fees</div>
+      <div class="code">studentId, quarter, amount,<br>status, paidOn, receiptNo, dueDate</div>
+      <span class="tag t-green">Phase 1 read-only</span>
+    </div></div>
+    <div class="row"><div class="dot dot-green"></div><div>
+      <div class="rt">timetable</div>
+      <div class="code">classSection, day, slots[ ]<br>{ time, subject, teacherName }</div>
+      <span class="tag t-gray">Static, rarely changes</span>
+    </div></div>
+    <div class="sec">Firebase Auth setup</div>
+    <div class="row"><div class="dot dot-blue"></div><div>
+      <div class="rt">Enable these providers</div>
+      <div class="rs">Email/Password for admin and teachers. Phone (OTP) for parents — easier for Kerala parents who may not have Google accounts.</div>
+      <span class="tag t-blue">Auth console</span>
+    </div></div>
+    <div class="tip"><div class="tip-t">Security rules (important)</div><div class="tip-b">Set Firestore rules so parents can only read their own child's data. Admins get full read/write. Never leave rules open.</div></div>
+  </div>
+
+  <div class="panel" id="p-widgets">
+    <div class="sec">Reusable components to create</div>
+    <div class="row"><div class="dot dot-red"></div><div>
+      <div class="rt">NoticeCard</div>
+      <div class="rs">Used in NoticesPage ListView. Parameters: title, body, category, time, isRead. Red dot hides when isRead = true.</div>
+      <span class="tag t-red">Component</span>
+    </div></div>
+    <div class="row"><div class="dot dot-red"></div><div>
+      <div class="rt">SubjectMarkRow</div>
+      <div class="rs">Color bar + subject name + teacher + mark number. Used in ProgressPage. Parameter: color, subject, teacher, score.</div>
+      <span class="tag t-red">Component</span>
+    </div></div>
+    <div class="row"><div class="dot dot-amber"></div><div>
+      <div class="rt">ScheduleCard</div>
+      <div class="rs">Time + subject + teacher. Active state turns red. Used in horizontal ListView on HomePage.</div>
+      <span class="tag t-amber">Component</span>
+    </div></div>
+    <div class="row"><div class="dot dot-amber"></div><div>
+      <div class="rt">StatCard</div>
+      <div class="rs">Big number + label + sub-label. Used in 2-col grid on HomePage. Reuse for Admin dashboard.</div>
+      <span class="tag t-amber">Component</span>
+    </div></div>
+    <div class="row"><div class="dot dot-green"></div><div>
+      <div class="rt">FeeHistoryRow</div>
+      <div class="rs">Quarter + date + paid/pending status. Green for paid, red for pending.</div>
+      <span class="tag t-green">Component</span>
+    </div></div>
+    <div class="row"><div class="dot dot-green"></div><div>
+      <div class="rt">CategoryChip</div>
+      <div class="rs">Filterable pill. Selected = red filled. Used in NoticesPage and future screens.</div>
+      <span class="tag t-green">Component</span>
+    </div></div>
+    <div class="sec">Theme settings in FlutterFlow</div>
+    <div class="row"><div class="dot dot-gray"></div><div>
+      <div class="rt">Colors to register</div>
+      <div class="code">primary:    #C0282A<br>primaryDark:#8B1A1B<br>primaryLight:#F8EBEB<br>accent:     #C8972A<br>background: #F5F4F2<br>textPrimary:#1A1A1A<br>textMuted:  #888882</div>
+    </div></div>
+    <div class="row"><div class="dot dot-gray"></div><div>
+      <div class="rt">Font</div>
+      <div class="rs">Add "Plus Jakarta Sans" from Google Fonts in FlutterFlow theme. Weights: 400, 500, 700.</div>
+    </div></div>
+  </div>
+
+  <div class="panel" id="p-steps">
+    <div class="sec">Exact build sequence</div>
+    <div class="row"><div class="step-num">1</div><div>
+      <div class="rt">Create FlutterFlow project</div>
+      <div class="rs">flutterflow.io → New Project → Blank. Choose mobile. Connect Firebase (it guides you step by step).</div>
+      <span class="tag t-gray">Day 1 · 1 hr</span>
+    </div></div>
+    <div class="row"><div class="step-num">2</div><div>
+      <div class="rt">Set theme + colors + font</div>
+      <div class="rs">Theme Settings → add all 7 colors above. Add Plus Jakarta Sans. This makes every screen consistent automatically.</div>
+      <span class="tag t-gray">Day 1 · 30 min</span>
+    </div></div>
+    <div class="row"><div class="step-num">3</div><div>
+      <div class="rt">Create Firestore collections</div>
+      <div class="rs">In FlutterFlow → Firestore → Create collections: users, notices, attendance, marks, fees, timetable. Add all fields.</div>
+      <span class="tag t-gray">Day 2 · 2 hrs</span>
+    </div></div>
+    <div class="row"><div class="step-num">4</div><div>
+      <div class="rt">Build SplashScreen + LoginPage</div>
+      <div class="rs">Logo, school name, phone OTP login. Test sign in works before touching other pages.</div>
+      <span class="tag t-red">Week 1</span>
+    </div></div>
+    <div class="row"><div class="step-num">5</div><div>
+      <div class="rt">Build NavBar + empty pages</div>
+      <div class="rs">Add Bottom Nav Bar widget. Connect to 5 pages: Home, Notices, Progress, Fees, Profile. Just titles for now.</div>
+      <span class="tag t-red">Week 1</span>
+    </div></div>
+    <div class="row"><div class="step-num">6</div><div>
+      <div class="rt">Build reusable components</div>
+      <div class="rs">Create all 6 components listed in Widgets tab BEFORE building pages. Pages will use them as building blocks.</div>
+      <span class="tag t-amber">Week 2</span>
+    </div></div>
+    <div class="row"><div class="step-num">7</div><div>
+      <div class="rt">Build NoticesPage first</div>
+      <div class="rs">Easiest data page. ListView + Firestore query + NoticeCard component. Once this works, other pages follow same pattern.</div>
+      <span class="tag t-amber">Week 2</span>
+    </div></div>
+    <div class="row"><div class="step-num">8</div><div>
+      <div class="rt">Build HomePage</div>
+      <div class="rs">Most complex. Build stats, schedule strip, notice banner one block at a time. Test each block separately.</div>
+      <span class="tag t-amber">Week 3</span>
+    </div></div>
+    <div class="row"><div class="step-num">9</div><div>
+      <div class="rt">Build Progress + Fees + Profile</div>
+      <div class="rs">These follow the same ListView + Firestore pattern. Should be faster now that you know the flow.</div>
+      <span class="tag t-green">Week 3–4</span>
+    </div></div>
+    <div class="row"><div class="step-num">10</div><div>
+      <div class="rt">Add Admin pages + test with real data</div>
+      <div class="rs">PostNoticePage is just a form. Add 5 test students to Firestore, test every screen with real data.</div>
+      <span class="tag t-green">Week 4–5</span>
+    </div></div>
+    <div class="row"><div class="step-num">11</div><div>
+      <div class="rt">Test on real Android phone</div>
+      <div class="rs">FlutterFlow → Run → Download APK. Install on Android. Give to 2–3 parents for feedback before Play Store.</div>
+      <span class="tag t-blue">Week 5–6</span>
+    </div></div>
+    <div class="row"><div class="step-num">12</div><div>
+      <div class="rt">Publish to Play Store</div>
+      <div class="rs">FlutterFlow → Publish → Android. Needs Google Play Developer account ($25 one-time). Follow FlutterFlow's publish guide exactly.</div>
+      <span class="tag t-blue">Week 6–8</span>
+    </div></div>
+    <div class="tip"><div class="tip-t">One rule to follow</div><div class="tip-b">Never skip to the next step if the current one isn't working. Especially login — fix it completely before building any data screen.</div></div>
+  </div>
+</div>
+
+<script>
+function show(id, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.getElementById('p-' + id).classList.add('on');
+  el.classList.add('on');
+}
+</script>
