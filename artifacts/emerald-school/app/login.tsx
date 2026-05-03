@@ -66,7 +66,7 @@ export default function LoginPage() {
           <View style={styles.circle2} />
           <View style={styles.logoContainer}>
             <View style={styles.logoCard}>
-              <Image source={LOGO} style={styles.logoImage} resizeMode="contain" />
+              <Image source={LOGO} style={styles.logoImage} resizeMode="cover" />
             </View>
           </View>
         </View>
@@ -193,18 +193,18 @@ const styles = StyleSheet.create({
   logoCard: {
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 4,
-    alignSelf: "center",
+    alignSelf: "stretch",
+    overflow: "hidden",
+    marginHorizontal: 0,
   },
   logoImage: {
-    width: 280,
-    height: 140,
+    width: "100%",
+    height: 200,
   },
   bottomSection: {
     flex: 1,
