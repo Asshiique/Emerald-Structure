@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { findAccountByEmail } from "@/context/DataContext";
 
 export interface User {
   uid: string;
@@ -10,6 +11,7 @@ export interface User {
   parentName: string;
   phone: string;
   email: string;
+  department?: string;
   profilePhoto?: string;
 }
 
@@ -22,26 +24,37 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-const MOCK_USERS: Record<string, User> = {
-  "parent@emerald.edu": {
-    uid: "user_001",
-    name: "Aryan Sharma",
-    role: "student",
-    classSection: "X-B",
-    rollNo: "EIS/2024/1024",
-    parentName: "Rajesh Sharma",
-    phone: "+91 98765 43210",
-    email: "parent@emerald.edu",
-  },
+const STATIC_USERS: Record<string, User> = {
   "admin@emerald.edu": {
     uid: "admin_001",
-    name: "Principal Thomas",
+    name: "Dr. Thomas Joseph",
     role: "admin",
     classSection: "",
     rollNo: "",
     parentName: "",
     phone: "+91 98765 00001",
     email: "admin@emerald.edu",
+  },
+  "teacher@emerald.edu": {
+    uid: "staff_001",
+    name: "Mr. Rajan Krishnan",
+    role: "teacher",
+    classSection: "X-B",
+    rollNo: "EIS/TCH/018",
+    parentName: "",
+    phone: "+91 98765 11001",
+    email: "rajan@emerald.edu",
+    department: "Mathematics",
+  },
+  "parent@emerald.edu": {
+    uid: "stu_001",
+    name: "Aryan Sharma",
+    role: "parent",
+    classSection: "X-B",
+    rollNo: "EIS/2024/1024",
+    parentName: "Rajesh Sharma",
+    phone: "+91 98765 43210",
+    email: "parent@emerald.edu",
   },
 };
 
@@ -52,24 +65,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     AsyncStorage.getItem("@emerald_user").then((stored) => {
       if (stored) {
-        try {
-          setUser(JSON.parse(stored));
-        } catch {}
+        try { setUser(JSON.parse(stored)); } catch {}
       }
       setIsLoading(false);
     });
   }, []);
 
   const login = async (email: string, _password: string): Promise<boolean> => {
-    const found = MOCK_USERS[email.toLowerCase().trim()];
-    if (found) {
-      await AsyncStorage.setItem("@emerald_user", JSON.stringify(found));
-      setUser(found);
+    const normalized = email.toLowerCase().trim();
+
+    const staticUser = STATIC_USERS[normalized];
+    if (staticUser) {
+      await AsyncStorage.setItem("@emerald_user", JSON.stringify(staticUser));
+      setUser(staticUser);
       return true;
     }
-    const defaultUser = MOCK_USERS["parent@emerald.edu"]!;
-    await AsyncStorage.setItem("@emerald_user", JSON.stringify(defaultUser));
-    setUser(defaultUser);
+
+    const dynamicUser = await findAccountByEmail(normalized);
+    if (dynamicUser) {
+      const u: User = {
+        uid: dynamicUser.uid,
+        name: dynamicUser.name,
+        role: dynamicUser.role,
+        classSection: dynamicUser.classSection,
+        rollNo: dynamicUser.rollNo,
+        parentName: dynamicUser.parentName,
+        phone: dynamicUser.phone,
+        email: dynamicUser.email,
+        department: dynamicUser.department,
+      };
+      await AsyncStorage.setItem("@emerald_user", JSON.stringify(u));
+      setUser(u);
+      return true;
+    }
+
+    const fallback = STATIC_USERS["parent@emerald.edu"]!;
+    await AsyncStorage.setItem("@emerald_user", JSON.stringify(fallback));
+    setUser(fallback);
     return true;
   };
 
