@@ -1,16 +1,10 @@
 import { router } from "expo-router";
 import React, { useState } from "react";
-import {
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CategoryChip } from "@/components/CategoryChip";
 import { NoticeCard } from "@/components/NoticeCard";
-import { NOTICES, Notice } from "@/data/mockData";
+import { useData } from "@/context/DataContext";
 
 const CATEGORIES = ["All", "Academic", "Events", "Fees", "Sports", "General"];
 
@@ -20,7 +14,8 @@ export default function NoticesPage() {
   const topPad = isWeb ? 67 : insets.top;
   const bottomPad = isWeb ? 34 : insets.bottom;
   const [selected, setSelected] = useState("All");
-  const [notices, setNotices] = useState<Notice[]>(NOTICES);
+  const { data, markNoticeRead } = useData();
+  const notices = data.notices;
 
   const unreadCount = notices.filter((n) => !n.isRead).length;
 
@@ -33,9 +28,7 @@ export default function NoticesPage() {
         });
 
   const handlePress = (id: string) => {
-    setNotices((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-    );
+    markNoticeRead(id);
     router.push(`/notice/${id}`);
   };
 
@@ -101,81 +94,17 @@ export default function NoticesPage() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    backgroundColor: "#C0282A",
-    paddingHorizontal: 20,
-    paddingBottom: 22,
-    overflow: "hidden",
-  },
-  circle1: {
-    position: "absolute",
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    backgroundColor: "rgba(255,255,255,0.06)",
-    top: -40,
-    right: -30,
-  },
-  circle2: {
-    position: "absolute",
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: "rgba(255,255,255,0.05)",
-    bottom: -20,
-    left: -20,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#FFFFFF",
-  },
-  headerSub: {
-    fontSize: 13,
-    color: "rgba(255,255,255,0.7)",
-    marginTop: 2,
-  },
-  unreadBadge: {
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  unreadText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#C0282A",
-  },
-  chipsContainer: {
-    backgroundColor: "#F5F4F2",
-    flexGrow: 0,
-  },
-  card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 14,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-    overflow: "hidden",
-  },
-  emptyState: {
-    padding: 32,
-    alignItems: "center",
-  },
-  emptyTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1A1A1A",
-  },
-  emptySub: {
-    fontSize: 13,
-    color: "#888882",
-    marginTop: 4,
-  },
+  header: { backgroundColor: "#C0282A", paddingHorizontal: 20, paddingBottom: 22, overflow: "hidden" },
+  circle1: { position: "absolute", width: 160, height: 160, borderRadius: 80, backgroundColor: "rgba(255,255,255,0.06)", top: -40, right: -30 },
+  circle2: { position: "absolute", width: 100, height: 100, borderRadius: 50, backgroundColor: "rgba(255,255,255,0.05)", bottom: -20, left: -20 },
+  headerRow: { flexDirection: "row", alignItems: "center" },
+  headerTitle: { fontSize: 24, fontWeight: "700", color: "#FFFFFF" },
+  headerSub: { fontSize: 13, color: "rgba(255,255,255,0.7)", marginTop: 2 },
+  unreadBadge: { backgroundColor: "#FFFFFF", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+  unreadText: { fontSize: 12, fontWeight: "700", color: "#C0282A" },
+  chipsContainer: { backgroundColor: "#F5F4F2", flexGrow: 0 },
+  card: { backgroundColor: "#FFFFFF", borderRadius: 14, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2, overflow: "hidden" },
+  emptyState: { padding: 32, alignItems: "center" },
+  emptyTitle: { fontSize: 16, fontWeight: "600", color: "#1A1A1A" },
+  emptySub: { fontSize: 13, color: "#888882", marginTop: 4 },
 });

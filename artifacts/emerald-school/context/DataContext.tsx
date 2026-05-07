@@ -92,6 +92,17 @@ export interface TimetableDay {
   slots: TimetableSlot[];
 }
 
+export interface AppNotice {
+  id: string;
+  title: string;
+  body: string;
+  category: "Urgent" | "Academic" | "Events" | "Fees" | "Sports" | "General";
+  time: string;
+  postedAt: string;
+  isRead: boolean;
+  targetRole: string;
+}
+
 export interface AppData {
   setupComplete: boolean;
   staff: StaffMember[];
@@ -102,6 +113,7 @@ export interface AppData {
   settings: AppSettings;
   firstLoginParents: string[];
   timetable: TimetableDay[];
+  notices: AppNotice[];
 }
 
 const STORAGE_KEY = "@emerald_app_data";
@@ -111,13 +123,21 @@ const SEED_DATA: AppData = {
   setupComplete: true,
   settings: { schoolName: "Emerald International School", address: "Mannarkkad, Palakkad, Kerala 678583", phone: "+91 4924 222 001", email: "info@emeraldschool.edu", principalName: "Dr. Thomas Joseph", academicYear: "2024-25" },
   firstLoginParents: [],
+  notices: [
+    { id: "n1", title: "Fee Payment Reminder — Q3", body: "Last date for fee payment is 20th January. Late payments attract a penalty of ₹200. Please ensure timely payment to avoid inconvenience.", category: "Fees", time: "Today · 9:12 AM", postedAt: "2025-01-15T09:12:00Z", isRead: false, targetRole: "all" },
+    { id: "n2", title: "Tarang 2025 — Annual Day", body: "Rehearsals start Monday. Costume list shared separately. All participants must confirm attendance with the coordinator.", category: "Events", time: "Yesterday · 4:30 PM", postedAt: "2025-01-14T16:30:00Z", isRead: false, targetRole: "all" },
+    { id: "n3", title: "NEET Foundation — New Batch", body: "New NEET foundation batch begins for Class X students. Register with the office by Friday. Limited seats available.", category: "Academic", time: "Jan 10 · 11:00 AM", postedAt: "2025-01-10T11:00:00Z", isRead: false, targetRole: "student" },
+    { id: "n4", title: "Holiday — Pongal", body: "School will remain closed on 14th and 15th January on account of Pongal. Classes resume on 16th January.", category: "General", time: "Jan 9 · 8:00 AM", postedAt: "2025-01-09T08:00:00Z", isRead: true, targetRole: "all" },
+    { id: "n5", title: "Inter-School Football Tournament", body: "Our team plays on 18th Jan. Students are encouraged to support the team. Buses available from school at 9 AM.", category: "Sports", time: "Jan 8 · 3:00 PM", postedAt: "2025-01-08T15:00:00Z", isRead: true, targetRole: "all" },
+    { id: "n6", title: "Unit Test — Science Schedule", body: "Unit test for Science subjects scheduled for 22nd January. Syllabus: Chapter 1-4. Practical component included.", category: "Academic", time: "Jan 7 · 10:00 AM", postedAt: "2025-01-07T10:00:00Z", isRead: true, targetRole: "student" },
+  ],
   timetable: [
-    { day: "Monday", slots: [{ time: "09:00", subject: "Mathematics", teacher: "Mr. Rajan Krishnan" }, { time: "10:00", subject: "Physics", teacher: "Ms. Priya Menon" }] },
-    { day: "Tuesday", slots: [{ time: "09:00", subject: "English", teacher: "Ms. Anita George" }, { time: "10:00", subject: "Chemistry", teacher: "Mr. Suresh Kumar" }] },
-    { day: "Wednesday", slots: [{ time: "09:00", subject: "Biology", teacher: "Ms. Lakshmi Nair" }, { time: "10:00", subject: "Computer Science", teacher: "Mr. Vinod Thomas" }] },
-    { day: "Thursday", slots: [{ time: "09:00", subject: "Mathematics", teacher: "Mr. Rajan Krishnan" }, { time: "10:00", subject: "English", teacher: "Ms. Anita George" }] },
-    { day: "Friday", slots: [{ time: "09:00", subject: "Physics", teacher: "Ms. Priya Menon" }, { time: "10:00", subject: "Chemistry", teacher: "Mr. Suresh Kumar" }] },
-    { day: "Saturday", slots: [{ time: "09:00", subject: "Computer Science", teacher: "Mr. Vinod Thomas" }, { time: "10:00", subject: "Biology", teacher: "Ms. Lakshmi Nair" }] },
+    { day: "Monday", slots: [{ time: "8:00", subject: "Mathematics", teacher: "Mr. Rajan Krishnan" }, { time: "9:00", subject: "Physics", teacher: "Ms. Priya Menon" }, { time: "10:00", subject: "English", teacher: "Ms. Anita George" }, { time: "11:15", subject: "Chemistry", teacher: "Mr. Suresh Kumar" }, { time: "1:30", subject: "Biology", teacher: "Ms. Lakshmi Nair" }, { time: "2:30", subject: "Computer Science", teacher: "Mr. Vinod Thomas" }] },
+    { day: "Tuesday", slots: [{ time: "8:00", subject: "English", teacher: "Ms. Anita George" }, { time: "9:00", subject: "Mathematics", teacher: "Mr. Rajan Krishnan" }, { time: "10:00", subject: "Computer Science", teacher: "Mr. Vinod Thomas" }, { time: "11:15", subject: "Physics", teacher: "Ms. Priya Menon" }, { time: "1:30", subject: "Chemistry", teacher: "Mr. Suresh Kumar" }, { time: "2:30", subject: "Biology", teacher: "Ms. Lakshmi Nair" }] },
+    { day: "Wednesday", slots: [{ time: "8:00", subject: "Biology", teacher: "Ms. Lakshmi Nair" }, { time: "9:00", subject: "English", teacher: "Ms. Anita George" }, { time: "10:00", subject: "Mathematics", teacher: "Mr. Rajan Krishnan" }, { time: "11:15", subject: "Computer Science", teacher: "Mr. Vinod Thomas" }, { time: "1:30", subject: "Physics", teacher: "Ms. Priya Menon" }, { time: "2:30", subject: "Chemistry", teacher: "Mr. Suresh Kumar" }] },
+    { day: "Thursday", slots: [{ time: "8:00", subject: "Chemistry", teacher: "Mr. Suresh Kumar" }, { time: "9:00", subject: "Biology", teacher: "Ms. Lakshmi Nair" }, { time: "10:00", subject: "Physics", teacher: "Ms. Priya Menon" }, { time: "11:15", subject: "English", teacher: "Ms. Anita George" }, { time: "1:30", subject: "Mathematics", teacher: "Mr. Rajan Krishnan" }, { time: "2:30", subject: "Computer Science", teacher: "Mr. Vinod Thomas" }] },
+    { day: "Friday", slots: [{ time: "8:00", subject: "Computer Science", teacher: "Mr. Vinod Thomas" }, { time: "9:00", subject: "Chemistry", teacher: "Mr. Suresh Kumar" }, { time: "10:00", subject: "Biology", teacher: "Ms. Lakshmi Nair" }, { time: "11:15", subject: "Mathematics", teacher: "Mr. Rajan Krishnan" }, { time: "1:30", subject: "English", teacher: "Ms. Anita George" }, { time: "2:30", subject: "Physics", teacher: "Ms. Priya Menon" }] },
+    { day: "Saturday", slots: [{ time: "8:00", subject: "Mathematics", teacher: "Mr. Rajan Krishnan" }, { time: "9:00", subject: "Computer Science", teacher: "Mr. Vinod Thomas" }] },
   ],
   staff: [
     { id: "staff_001", name: "Mr. Rajan Krishnan", phone: "+91 98765 11001", email: "rajan@emerald.edu", role: "Class Teacher", department: "Mathematics", classSection: "X-B", joinDate: "2018-06-01", employeeId: "EIS/TCH/018", isActive: true },
@@ -139,6 +159,8 @@ const SEED_DATA: AppData = {
   homework: [
     { id: "ehw_001", teacherId: "staff_001", teacherName: "Mr. Rajan Krishnan", subject: "Mathematics", classSection: "X-B", title: "Exercise 5.3 — Quadratic Equations", description: "Complete problems 1 to 15 from page 98. Show full working.", dueDate: "2025-01-20", postedAt: "2025-01-15T10:00:00Z" },
     { id: "ehw_002", teacherId: "staff_002", teacherName: "Ms. Priya Menon", subject: "Physics", classSection: "X-B", title: "Lab Report — Ohm's Law", description: "Write the complete lab report with observations and conclusions.", dueDate: "2025-01-22", postedAt: "2025-01-15T11:00:00Z" },
+    { id: "ehw_003", teacherId: "staff_003", teacherName: "Ms. Anita George", subject: "English", classSection: "X-B", title: "Essay — My Favourite Festival", description: "Write a 300-word essay. Focus on descriptive language and personal experience.", dueDate: "2025-01-27", postedAt: "2025-01-14T09:00:00Z" },
+    { id: "ehw_004", teacherId: "staff_004", teacherName: "Mr. Suresh Kumar", subject: "Chemistry", classSection: "X-B", title: "Periodic Table Review", description: "Memorize the first 20 elements with symbols and atomic numbers. Quiz on Friday.", dueDate: "2025-01-10", postedAt: "2025-01-07T08:00:00Z" },
   ],
   evaluations: [
     { id: "eval_001", teacherId: "staff_001", teacherName: "Mr. Rajan Krishnan", subject: "Mathematics", classSection: "X-B", ratings: { teachingQuality: 5, classroomManagement: 4, studentEngagement: 5, punctuality: 5, parentCommunication: 4, homeworkManagement: 4 }, strengths: "Excellent command over the subject. Students respond very well.", improvements: "Could improve parent communication frequency.", remarks: "One of our best mathematics teachers. Keep up the great work.", overallRating: 5, date: "2024-11-15" },
@@ -163,6 +185,8 @@ interface DataContextType {
   updateEvaluation: (id: string, updates: Partial<Evaluation>) => Promise<void>;
   updateSettings: (s: Partial<AppSettings>) => Promise<void>;
   updateTimetable: (day: string, slots: TimetableSlot[]) => Promise<void>;
+  addNotice: (n: Omit<AppNotice, "id" | "isRead">) => Promise<void>;
+  markNoticeRead: (id: string) => Promise<void>;
   markParentFirstLogin: (email: string) => Promise<void>;
 }
 
@@ -175,14 +199,16 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([AsyncStorage.getItem(STORAGE_KEY), AsyncStorage.getItem(PARENT_LOGIN_KEY)]).then(([stored, parentLogged]) => {
+    AsyncStorage.getItem(STORAGE_KEY).then((stored) => {
       if (stored) {
-        try { setData(JSON.parse(stored)); } catch {}
+        try {
+          const parsed: AppData = JSON.parse(stored);
+          if (!parsed.notices) parsed.notices = SEED_DATA.notices;
+          if (!parsed.timetable) parsed.timetable = SEED_DATA.timetable;
+          setData(parsed);
+        } catch {}
       } else {
         persist(SEED_DATA);
-      }
-      if (!parentLogged) {
-        AsyncStorage.setItem(PARENT_LOGIN_KEY, JSON.stringify([])).catch(() => {});
       }
       setIsLoading(false);
     });
@@ -221,9 +247,14 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const updateEvaluation = async (id: string, updates: Partial<Evaluation>) => { await update((prev) => ({ ...prev, evaluations: prev.evaluations.map((e) => (e.id === id ? { ...e, ...updates } : e)) })); };
   const updateSettings = async (s: Partial<AppSettings>) => { await update((prev) => ({ ...prev, settings: { ...prev.settings, ...s } })); };
   const updateTimetable = async (day: string, slots: TimetableSlot[]) => { await update((prev) => ({ ...prev, timetable: prev.timetable.map((d) => (d.day === day ? { ...d, slots } : d)) })); };
+  const addNotice = async (n: Omit<AppNotice, "id" | "isRead">) => {
+    const notice: AppNotice = { ...n, id: "notice_" + uid(), isRead: false };
+    await update((prev) => ({ ...prev, notices: [notice, ...prev.notices] }));
+  };
+  const markNoticeRead = async (id: string) => { await update((prev) => ({ ...prev, notices: prev.notices.map((n) => (n.id === id ? { ...n, isRead: true } : n)) })); };
   const markParentFirstLogin = async (email: string) => { await update((prev) => ({ ...prev, firstLoginParents: prev.firstLoginParents.includes(email) ? prev.firstLoginParents : [...prev.firstLoginParents, email] })); };
 
-  return <DataContext.Provider value={{ data, isLoading, completeSetup, addStaff, updateStaff, removeStaff, addStudent, updateStudent, removeStudent, markAttendance, getAttendanceForDate, addHomework, addEvaluation, updateEvaluation, updateSettings, updateTimetable, markParentFirstLogin }}>{children}</DataContext.Provider>;
+  return <DataContext.Provider value={{ data, isLoading, completeSetup, addStaff, updateStaff, removeStaff, addStudent, updateStudent, removeStudent, markAttendance, getAttendanceForDate, addHomework, addEvaluation, updateEvaluation, updateSettings, updateTimetable, addNotice, markNoticeRead, markParentFirstLogin }}>{children}</DataContext.Provider>;
 }
 
 export function useData() { const ctx = useContext(DataContext); if (!ctx) throw new Error("useData must be used within DataProvider"); return ctx; }

@@ -5,6 +5,7 @@ import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
 import { useData } from "@/context/DataContext";
+import { useRoleGuard } from "@/hooks/useRoleGuard";
 
 interface CardProps {
   icon: string;
@@ -27,6 +28,7 @@ function Card({ icon, title, subtitle, color, onPress }: CardProps) {
 }
 
 export default function AdminPanelPage() {
+  useRoleGuard(["admin"]);
   const { user, logout } = useAuth();
   const { data } = useData();
   const insets = useSafeAreaInsets();

@@ -3,15 +3,30 @@ import { router } from "expo-router";
 import React, { useState } from "react";
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useAuth } from "@/context/AuthContext";
+import { AppNotice, useData } from "@/context/DataContext";
+import { useRoleGuard } from "@/hooks/useRoleGuard";
 
-const CATEGORIES = ["Urgent", "Academic", "Events", "Fees", "Sports", "General"] as const;
+const CATEGORIES: AppNotice["category"][] = ["Urgent", "Academic", "Events", "Fees", "Sports", "General"];
+const CATEGORY_COLORS: Record<string, string> = {
+  Urgent: "#C0282A", Academic: "#185FA5", Events: "#BA7517", Fees: "#7B3F9E", Sports: "#3B6D11", General: "#555550",
+};
+
+function formatTime(date: Date): string {
+  const h = date.getHours(), m = date.getMinutes().toString().padStart(2, "0");
+  const ampm = h >= 12 ? "PM" : "AM";
+  return `Today · ${h % 12 || 12}:${m} ${ampm}`;
+}
 
 export default function PostNoticePage() {
+  useRoleGuard(["admin"]);
+  const { user } = useAuth();
+  const { addNotice } = useData();
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [category, setCategory] = useState<string>("");
+  const [category, setCategory] = useState<AppNotice["category"] | "">("");
   const [loading, setLoading] = useState(false);
 
   const handlePost = async () => {
@@ -20,16 +35,25 @@ export default function PostNoticePage() {
       return;
     }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 600));
-    setLoading(false);
-    Alert.alert("Notice Posted", "Your notice has been published to all students and parents.", [
-      { text: "Post Another", onPress: () => { setTitle(""); setBody(""); setCategory(""); } },
-      { text: "Done", onPress: () => router.back() },
-    ]);
-  };
-
-  const CATEGORY_COLORS: Record<string, string> = {
-    Urgent: "#C0282A", Academic: "#185FA5", Events: "#BA7517", Fees: "#7B3F9E", Sports: "#3B6D11", General: "#555550",
+    try {
+      const now = new Date();
+      await addNotice({
+        title: title.trim(),
+        body: body.trim(),
+        category: category as AppNotice["category"],
+        time: formatTime(now),
+        postedAt: now.toISOString(),
+        targetRole: "all",
+      });
+      Alert.alert("Notice Posted", "Your notice has been published to all students and parents.", [
+        { text: "Post Another", onPress: () => { setTitle(""); setBody(""); setCategory(""); } },
+        { text: "Done", onPress: () => router.back() },
+      ]);
+    } catch {
+      Alert.alert("Error", "Failed to post notice. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -85,6 +109,11 @@ export default function PostNoticePage() {
               autoCapitalize="sentences"
             />
 
+            <View style={styles.infoRow}>
+              <Feather name="users" size={13} color="#1A5FA5" />
+              <Text style={styles.infoText}>This notice will appear for all parents and students immediately.</Text>
+            </View>
+
             <TouchableOpacity style={styles.btn} onPress={handlePost} disabled={loading} activeOpacity={0.85}>
               {loading ? <ActivityIndicator color="#FFFFFF" /> : (
                 <>
@@ -112,6 +141,8 @@ const styles = StyleSheet.create({
   inputRow: { flexDirection: "row", alignItems: "center", backgroundColor: "#F5F4F2", borderRadius: 10, height: 48, gap: 8 },
   input: { flex: 1, fontSize: 14, color: "#1A1A1A", paddingHorizontal: 8 },
   textArea: { backgroundColor: "#F5F4F2", borderRadius: 10, padding: 12, fontSize: 14, color: "#1A1A1A", minHeight: 140 },
+  infoRow: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#E8F1FB", borderRadius: 10, padding: 12, marginTop: 16 },
+  infoText: { flex: 1, fontSize: 12, color: "#1A5FA5" },
   btn: { backgroundColor: "#C0282A", borderRadius: 12, height: 50, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 20 },
   btnText: { fontSize: 15, fontWeight: "700", color: "#FFFFFF" },
 });

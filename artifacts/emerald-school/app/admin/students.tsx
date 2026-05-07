@@ -4,10 +4,10 @@ import React, { useState } from "react";
 import { Linking, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useData } from "@/context/DataContext";
-
-const SECTIONS = ["All", "X-B", "X-A", "IX-A", "IX-B", "VIII-A", "VIII-B"];
+import { useRoleGuard } from "@/hooks/useRoleGuard";
 
 export default function AdminStudentsPage() {
+  useRoleGuard(["admin"]);
   const { data } = useData();
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
@@ -77,7 +77,7 @@ export default function AdminStudentsPage() {
           </View>
         ) : (
           filtered.map((s) => (
-            <View key={s.id} style={styles.card}>
+            <TouchableOpacity key={s.id} style={styles.card} onPress={() => router.push(`/admin/students/${s.id}` as any)} activeOpacity={0.75}>
               <View style={styles.rollBadge}>
                 <Text style={styles.rollNum}>{s.rollNo}</Text>
               </View>
@@ -91,10 +91,10 @@ export default function AdminStudentsPage() {
                 <Text style={styles.parentName}>{s.parentName}</Text>
                 <Text style={styles.admNo}>{s.admissionNo} · {s.bloodGroup}</Text>
               </View>
-              <TouchableOpacity style={styles.callBtn} onPress={() => Linking.openURL(`tel:${s.parentPhone}`)}>
+              <TouchableOpacity style={styles.callBtn} onPress={(e) => { e.stopPropagation(); Linking.openURL(`tel:${s.parentPhone}`); }}>
                 <Feather name="phone" size={16} color="#3B6D11" />
               </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
           ))
         )}
       </ScrollView>

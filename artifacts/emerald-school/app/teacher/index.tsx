@@ -5,10 +5,12 @@ import { Linking, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
 import { useData } from "@/context/DataContext";
+import { useRoleGuard } from "@/hooks/useRoleGuard";
 
 const SCHOOL_PHONE = "+914924222001";
 
 export default function TeacherDashboardPage() {
+  useRoleGuard(["teacher", "admin"]);
   const { user, logout } = useAuth();
   const { data } = useData();
   const insets = useSafeAreaInsets();

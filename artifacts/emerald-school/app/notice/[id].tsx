@@ -1,16 +1,9 @@
 import { Feather } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import React from "react";
-import {
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import React, { useEffect } from "react";
+import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { NOTICES } from "@/data/mockData";
+import { useData } from "@/context/DataContext";
 
 const CATEGORY_STYLES: Record<string, { bg: string; color: string }> = {
   Urgent: { bg: "#F8EBEB", color: "#C0282A" },
@@ -25,8 +18,16 @@ export default function NoticeDetailPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
+  const { data, markNoticeRead } = useData();
 
-  const notice = NOTICES.find((n) => n.id === id);
+  const notice = data.notices.find((n) => n.id === id);
+
+  useEffect(() => {
+    if (notice && !notice.isRead) {
+      markNoticeRead(notice.id);
+    }
+  }, [notice?.id]);
+
   const catStyle = notice
     ? (CATEGORY_STYLES[notice.category] ?? CATEGORY_STYLES["General"]!)
     : CATEGORY_STYLES["General"]!;
@@ -77,90 +78,19 @@ export default function NoticeDetailPage() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    backgroundColor: "#C0282A",
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 8,
-    paddingBottom: 16,
-  },
-  backBtn: {
-    width: 44,
-    height: 44,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    textAlign: "center",
-  },
-  card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 14,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  badge: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-    marginBottom: 10,
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: "600",
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#1A1A1A",
-    lineHeight: 28,
-    marginBottom: 6,
-  },
-  time: {
-    fontSize: 12,
-    color: "#888882",
-  },
-  divider: {
-    height: 0.5,
-    backgroundColor: "rgba(0,0,0,0.1)",
-    marginVertical: 16,
-  },
-  body: {
-    fontSize: 15,
-    color: "#555550",
-    lineHeight: 24,
-  },
-  footerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  footerText: {
-    fontSize: 12,
-    color: "#888882",
-  },
-  notFound: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 12,
-  },
-  notFoundText: {
-    fontSize: 16,
-    color: "#1A1A1A",
-  },
-  backLink: {
-    fontSize: 14,
-    color: "#C0282A",
-    fontWeight: "600",
-  },
+  header: { backgroundColor: "#C0282A", flexDirection: "row", alignItems: "center", paddingHorizontal: 8, paddingBottom: 16 },
+  backBtn: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  headerTitle: { flex: 1, fontSize: 18, fontWeight: "700", color: "#FFFFFF", textAlign: "center" },
+  card: { backgroundColor: "#FFFFFF", borderRadius: 14, padding: 20, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
+  badge: { alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, marginBottom: 10 },
+  badgeText: { fontSize: 11, fontWeight: "600" },
+  title: { fontSize: 20, fontWeight: "700", color: "#1A1A1A", lineHeight: 28, marginBottom: 6 },
+  time: { fontSize: 12, color: "#888882" },
+  divider: { height: 0.5, backgroundColor: "rgba(0,0,0,0.1)", marginVertical: 16 },
+  body: { fontSize: 15, color: "#555550", lineHeight: 24 },
+  footerRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  footerText: { fontSize: 12, color: "#888882" },
+  notFound: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
+  notFoundText: { fontSize: 16, color: "#1A1A1A" },
+  backLink: { fontSize: 14, color: "#C0282A", fontWeight: "600" },
 });

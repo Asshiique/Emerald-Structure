@@ -37,7 +37,9 @@ function RootLayoutNav() {
       <Stack.Screen name="admin/index" />
       <Stack.Screen name="admin/staff/index" />
       <Stack.Screen name="admin/staff/add" />
+      <Stack.Screen name="admin/staff/[id]" />
       <Stack.Screen name="admin/students" />
+      <Stack.Screen name="admin/students/[id]" />
       <Stack.Screen name="admin/post-notice" />
       <Stack.Screen name="admin/post-homework" />
       <Stack.Screen name="admin/settings" />
