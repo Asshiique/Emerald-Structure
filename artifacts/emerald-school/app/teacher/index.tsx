@@ -12,7 +12,7 @@ const SCHOOL_PHONE = "+914924222001";
 export default function TeacherDashboardPage() {
   useRoleGuard(["teacher", "admin"]);
   const { user, logout } = useAuth();
-  const { data } = useData();
+  const { data, getAttendanceForDate } = useData();
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
 
@@ -22,9 +22,7 @@ export default function TeacherDashboardPage() {
 
   const classStudents = data.students.filter((s) => s.classSection === classSection);
   const todayStr = new Date().toISOString().split("T")[0];
-  const todayAtt = data.getAttendanceForDate
-    ? data.attendance?.find((a) => a.date === todayStr && a.classSection === classSection)
-    : undefined;
+  const todayAtt = getAttendanceForDate(todayStr, classSection);
   const presentToday = todayAtt?.records.filter((r) => r.status === "present").length ?? 0;
 
   const myHomework = data.homework.filter((h) => h.teacherId === staffRecord?.id);

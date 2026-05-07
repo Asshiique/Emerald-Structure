@@ -117,7 +117,7 @@ function ClassicTabLayout({ role }: { role: string }) {
       ) : isWeb ? (
         <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.card }]} />
       ) : null,
-    tabBarLabelStyle: { fontSize: 9, fontWeight: "600", marginBottom: 2 },
+    tabBarLabelStyle: { fontSize: 9, fontWeight: "600" as const, marginBottom: 2 },
   };
 
   return (
@@ -142,7 +142,7 @@ function ClassicTabLayout({ role }: { role: string }) {
         <>
           <Tabs.Screen name="admin/index" options={{ title: "Dashboard", tabBarIcon: ({ color }) => <Feather name="home" size={20} color={color} /> }} />
           <Tabs.Screen name="admin/staff/index" options={{ title: "Staff", tabBarIcon: ({ color }) => <Feather name="users" size={20} color={color} /> }} />
-          <Tabs.Screen name="admin/students" options={{ title: "Students", tabBarIcon: ({ color }) => <Feather name="graduation-cap" size={20} color={color} /> }} />
+          <Tabs.Screen name="admin/students" options={{ title: "Students", tabBarIcon: ({ color }) => <Feather name="award" size={20} color={color} /> }} />
           <Tabs.Screen name="admin/post-homework" options={{ title: "Academic", tabBarIcon: ({ color }) => <Feather name="book" size={20} color={color} /> }} />
           <Tabs.Screen name="admin/settings" options={{ title: "Settings", tabBarIcon: ({ color }) => <Feather name="settings" size={20} color={color} /> }} />
         </>

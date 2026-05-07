@@ -1,5 +1,19 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+import {
+  arrayUnion,
+  collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  orderBy,
+  query,
+  setDoc,
+  updateDoc,
+} from "firebase/firestore";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
+import { db } from "@/lib/firebase";
+import { createFirebaseAccount } from "@/lib/firebaseBootstrap";
+import { useAuth } from "./AuthContext";
 
 export const PROTECTED_ADMIN_EMAILS = new Set([
   "ashiquemuhammed057@gmail.com",
@@ -37,6 +51,7 @@ export interface Student {
   address: string;
   prevSchool: string;
   profilePhoto?: string;
+  parentUid?: string;
 }
 
 export interface AttendanceRecord {
@@ -135,70 +150,39 @@ export interface AppData {
   gallery: GalleryItem[];
 }
 
-const STORAGE_KEY = "@emerald_app_data";
-
-const SEED_DATA: AppData = {
-  setupComplete: true,
-  settings: {
-    schoolName: "Emerald International School",
-    address: "Vadakkumannam, Mannarkkad, Palakkad, Kerala",
-    phone: "+91 6238960292, +91 7356596745",
-    email: "emeraldinternationalschoolmkd@gmail.com",
-    principalName: "Shalima Soman",
-    academicYear: "2025-26",
-  },
-  firstLoginParents: [],
-  gallery: [],
-  notices: [
-    { id: "n1", title: "Fee Payment Reminder — Q3", body: "Last date for fee payment is 20th January. Late payments attract a penalty of ₹200. Please ensure timely payment to avoid inconvenience.", category: "Fees", time: "Today · 9:12 AM", postedAt: "2025-01-15T09:12:00Z", isRead: false, targetRole: "all" },
-    { id: "n2", title: "Tarang 2025 — Annual Day", body: "Rehearsals start Monday. Costume list shared separately. All participants must confirm attendance with the coordinator.", category: "Events", time: "Yesterday · 4:30 PM", postedAt: "2025-01-14T16:30:00Z", isRead: false, targetRole: "all" },
-    { id: "n3", title: "NEET Foundation — New Batch", body: "New NEET foundation batch begins for Class X students. Register with the office by Friday. Limited seats available.", category: "Academic", time: "Jan 10 · 11:00 AM", postedAt: "2025-01-10T11:00:00Z", isRead: false, targetRole: "student" },
-    { id: "n4", title: "Holiday — Pongal", body: "School will remain closed on 14th and 15th January on account of Pongal. Classes resume on 16th January.", category: "General", time: "Jan 9 · 8:00 AM", postedAt: "2025-01-09T08:00:00Z", isRead: true, targetRole: "all" },
-    { id: "n5", title: "Inter-School Football Tournament", body: "Our team plays on 18th Jan. Students are encouraged to support the team. Buses available from school at 9 AM.", category: "Sports", time: "Jan 8 · 3:00 PM", postedAt: "2025-01-08T15:00:00Z", isRead: true, targetRole: "all" },
-  ],
-  timetable: [
-    { day: "Monday", slots: [{ time: "8:00", subject: "Mathematics", teacher: "Mr. Rajan Krishnan" }, { time: "9:00", subject: "Physics", teacher: "Ms. Priya Menon" }, { time: "10:00", subject: "English", teacher: "Ms. Anita George" }, { time: "11:15", subject: "Chemistry", teacher: "Mr. Suresh Kumar" }, { time: "1:30", subject: "Biology", teacher: "Ms. Lakshmi Nair" }, { time: "2:30", subject: "Computer Science", teacher: "Mr. Vinod Thomas" }] },
-    { day: "Tuesday", slots: [{ time: "8:00", subject: "English", teacher: "Ms. Anita George" }, { time: "9:00", subject: "Mathematics", teacher: "Mr. Rajan Krishnan" }, { time: "10:00", subject: "Computer Science", teacher: "Mr. Vinod Thomas" }, { time: "11:15", subject: "Physics", teacher: "Ms. Priya Menon" }, { time: "1:30", subject: "Chemistry", teacher: "Mr. Suresh Kumar" }, { time: "2:30", subject: "Biology", teacher: "Ms. Lakshmi Nair" }] },
-    { day: "Wednesday", slots: [{ time: "8:00", subject: "Biology", teacher: "Ms. Lakshmi Nair" }, { time: "9:00", subject: "English", teacher: "Ms. Anita George" }, { time: "10:00", subject: "Mathematics", teacher: "Mr. Rajan Krishnan" }, { time: "11:15", subject: "Computer Science", teacher: "Mr. Vinod Thomas" }, { time: "1:30", subject: "Physics", teacher: "Ms. Priya Menon" }, { time: "2:30", subject: "Chemistry", teacher: "Mr. Suresh Kumar" }] },
-    { day: "Thursday", slots: [{ time: "8:00", subject: "Chemistry", teacher: "Mr. Suresh Kumar" }, { time: "9:00", subject: "Biology", teacher: "Ms. Lakshmi Nair" }, { time: "10:00", subject: "Physics", teacher: "Ms. Priya Menon" }, { time: "11:15", subject: "English", teacher: "Ms. Anita George" }, { time: "1:30", subject: "Mathematics", teacher: "Mr. Rajan Krishnan" }, { time: "2:30", subject: "Computer Science", teacher: "Mr. Vinod Thomas" }] },
-    { day: "Friday", slots: [{ time: "8:00", subject: "Computer Science", teacher: "Mr. Vinod Thomas" }, { time: "9:00", subject: "Chemistry", teacher: "Mr. Suresh Kumar" }, { time: "10:00", subject: "Biology", teacher: "Ms. Lakshmi Nair" }, { time: "11:15", subject: "Mathematics", teacher: "Mr. Rajan Krishnan" }, { time: "1:30", subject: "English", teacher: "Ms. Anita George" }, { time: "2:30", subject: "Physics", teacher: "Ms. Priya Menon" }] },
-    { day: "Saturday", slots: [{ time: "8:00", subject: "Mathematics", teacher: "Mr. Rajan Krishnan" }, { time: "9:00", subject: "Computer Science", teacher: "Mr. Vinod Thomas" }] },
-  ],
-  staff: [
-    { id: "staff_001", name: "Mr. Rajan Krishnan", phone: "+91 98765 11001", email: "rajan@emerald.edu", role: "Class Teacher", department: "Mathematics", classSection: "X-B", joinDate: "2018-06-01", employeeId: "EIS/TCH/018", isActive: true },
-    { id: "staff_002", name: "Ms. Priya Menon", phone: "+91 98765 11002", email: "priya@emerald.edu", role: "Subject Teacher", department: "Physics", classSection: "X-B", joinDate: "2020-06-01", employeeId: "EIS/TCH/020", isActive: true },
-    { id: "staff_003", name: "Ms. Anita George", phone: "+91 98765 11003", email: "anita@emerald.edu", role: "Subject Teacher", department: "English", classSection: "X-B", joinDate: "2019-06-01", employeeId: "EIS/TCH/019", isActive: true },
-    { id: "staff_004", name: "Mr. Suresh Kumar", phone: "+91 98765 11004", email: "suresh@emerald.edu", role: "Subject Teacher", department: "Chemistry", classSection: "X-B", joinDate: "2021-06-01", employeeId: "EIS/TCH/021", isActive: true },
-    { id: "staff_005", name: "Ms. Lakshmi Nair", phone: "+91 98765 11005", email: "nair@emerald.edu", role: "Subject Teacher", department: "Biology", classSection: "X-B", joinDate: "2017-06-01", employeeId: "EIS/TCH/017", isActive: true },
-    { id: "staff_006", name: "Mr. Vinod Thomas", phone: "+91 98765 11006", email: "vinod@emerald.edu", role: "Subject Teacher", department: "Computer Science", classSection: "X-B", joinDate: "2022-06-01", employeeId: "EIS/TCH/022", isActive: true },
-    { id: "staff_007", name: "Ms. Sheela Varma", phone: "+91 98765 11007", email: "sheela@emerald.edu", role: "Office Staff", department: "Office", classSection: "", joinDate: "2015-06-01", employeeId: "EIS/OFF/015", isActive: true },
-  ],
-  students: [
-    { id: "stu_001", name: "Aryan Sharma", dob: "2009-03-12", gender: "Male", bloodGroup: "A+", classSection: "X-B", rollNo: "1", admissionNo: "EIS/2024/1024", parentName: "Rajesh Sharma", parentPhone: "+91 98765 43210", parentEmail: "parent@emerald.edu", parentWhatsApp: "+91 98765 43210", address: "12, Gandhi Nagar, Mannarkkad", prevSchool: "St. Mary's School" },
-    { id: "stu_002", name: "Meera Pillai", dob: "2009-07-22", gender: "Female", bloodGroup: "B+", classSection: "X-B", rollNo: "2", admissionNo: "EIS/2024/1025", parentName: "Suresh Pillai", parentPhone: "+91 98765 43211", parentEmail: "meera.parent@emerald.edu", parentWhatsApp: "+91 98765 43211", address: "45, MG Road, Mannarkkad", prevSchool: "" },
-    { id: "stu_003", name: "Aditya Nair", dob: "2009-11-05", gender: "Male", bloodGroup: "O+", classSection: "X-B", rollNo: "3", admissionNo: "EIS/2024/1026", parentName: "Vijay Nair", parentPhone: "+91 98765 43212", parentEmail: "aditya.parent@emerald.edu", parentWhatsApp: "+91 98765 43212", address: "78, Nehru Street, Palakkad", prevSchool: "Central School" },
-    { id: "stu_004", name: "Priya Thomas", dob: "2009-02-18", gender: "Female", bloodGroup: "AB+", classSection: "X-B", rollNo: "4", admissionNo: "EIS/2024/1027", parentName: "George Thomas", parentPhone: "+91 98765 43213", parentEmail: "priya.parent@emerald.edu", parentWhatsApp: "+91 98765 43213", address: "22, Church Road, Mannarkkad", prevSchool: "" },
-    { id: "stu_005", name: "Rahul Menon", dob: "2009-09-30", gender: "Male", bloodGroup: "B-", classSection: "X-B", rollNo: "5", admissionNo: "EIS/2024/1028", parentName: "Ravi Menon", parentPhone: "+91 98765 43214", parentEmail: "rahul.parent@emerald.edu", parentWhatsApp: "+91 98765 43214", address: "56, Lake View, Mannarkkad", prevSchool: "Kendriya Vidyalaya" },
-  ],
-  attendance: [],
-  homework: [
-    { id: "ehw_001", teacherId: "staff_001", teacherName: "Mr. Rajan Krishnan", subject: "Mathematics", classSection: "X-B", title: "Exercise 5.3 — Quadratic Equations", description: "Complete problems 1 to 15 from page 98. Show full working.", dueDate: "2025-01-20", postedAt: "2025-01-15T10:00:00Z" },
-    { id: "ehw_002", teacherId: "staff_002", teacherName: "Ms. Priya Menon", subject: "Physics", classSection: "X-B", title: "Lab Report — Ohm's Law", description: "Write the complete lab report with observations and conclusions.", dueDate: "2025-01-22", postedAt: "2025-01-15T11:00:00Z" },
-    { id: "ehw_003", teacherId: "staff_003", teacherName: "Ms. Anita George", subject: "English", classSection: "X-B", title: "Essay — My Favourite Festival", description: "Write a 300-word essay. Focus on descriptive language and personal experience.", dueDate: "2025-01-27", postedAt: "2025-01-14T09:00:00Z" },
-  ],
-  evaluations: [
-    { id: "eval_001", teacherId: "staff_001", teacherName: "Mr. Rajan Krishnan", subject: "Mathematics", classSection: "X-B", ratings: { teachingQuality: 5, classroomManagement: 4, studentEngagement: 5, punctuality: 5, parentCommunication: 4, homeworkManagement: 4 }, strengths: "Excellent command over the subject.", improvements: "Could improve parent communication.", remarks: "One of our best teachers.", overallRating: 5, date: "2024-11-15" },
-  ],
+const DEFAULT_SETTINGS: AppSettings = {
+  schoolName: "Emerald International School",
+  address: "Vadakkumannam, Mannarkkad, Palakkad, Kerala",
+  phone: "+91 6238960292, +91 7356596745",
+  email: "emeraldinternationalschoolmkd@gmail.com",
+  principalName: "Shalima Soman",
+  academicYear: "2025-26",
 };
+
+const INITIAL_DATA: AppData = {
+  setupComplete: true,
+  settings: DEFAULT_SETTINGS,
+  firstLoginParents: [],
+  staff: [],
+  students: [],
+  attendance: [],
+  homework: [],
+  evaluations: [],
+  notices: [],
+  gallery: [],
+  timetable: [],
+};
+
+const READ_NOTICES_KEY = "@emerald_read_notice_ids";
 
 interface DataContextType {
   data: AppData;
   isLoading: boolean;
   completeSetup: (name: string, email: string, phone: string) => Promise<void>;
-  addStaff: (s: Omit<StaffMember, "id" | "isActive">) => Promise<StaffMember>;
+  addStaff: (s: Omit<StaffMember, "id" | "isActive">, password?: string) => Promise<StaffMember>;
   updateStaff: (id: string, updates: Partial<StaffMember>) => Promise<void>;
   removeStaff: (id: string) => Promise<void>;
-  addStudent: (s: Omit<Student, "id">) => Promise<Student>;
+  addStudent: (s: Omit<Student, "id">, password?: string) => Promise<Student>;
   updateStudent: (id: string, updates: Partial<Student>) => Promise<void>;
   removeStudent: (id: string) => Promise<void>;
   markAttendance: (rec: Omit<AttendanceRecord, "id">) => Promise<void>;
@@ -216,108 +200,294 @@ interface DataContextType {
 }
 
 const DataContext = createContext<DataContextType | null>(null);
-function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
-async function persist(data: AppData) { await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+
+function genId() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
 
 export function DataProvider({ children }: { children: React.ReactNode }) {
-  const [data, setData] = useState<AppData>(SEED_DATA);
+  const { user, isLoading: authLoading } = useAuth();
+  const [data, setData] = useState<AppData>(INITIAL_DATA);
   const [isLoading, setIsLoading] = useState(true);
+  const readIds = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then((stored) => {
-      if (stored) {
-        try {
-          const parsed: AppData = JSON.parse(stored);
-          if (!parsed.notices) parsed.notices = SEED_DATA.notices;
-          if (!parsed.timetable) parsed.timetable = SEED_DATA.timetable;
-          if (!parsed.gallery) parsed.gallery = [];
-          parsed.settings = {
-            ...parsed.settings,
-            schoolName: SEED_DATA.settings.schoolName,
-            address: SEED_DATA.settings.address,
-            phone: SEED_DATA.settings.phone,
-            email: SEED_DATA.settings.email,
-            principalName: SEED_DATA.settings.principalName,
-            academicYear: SEED_DATA.settings.academicYear,
-          };
-          setData(parsed);
-          persist(parsed);
-        } catch { persist(SEED_DATA); }
-      } else {
-        persist(SEED_DATA);
-      }
+    AsyncStorage.getItem(READ_NOTICES_KEY).then((s) => {
+      if (s) readIds.current = new Set(JSON.parse(s));
+    });
+  }, []);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      setData(INITIAL_DATA);
       setIsLoading(false);
-    });
-  }, []);
+      return;
+    }
 
-  const update = useCallback(async (fn: (prev: AppData) => AppData) => {
-    setData((prev) => {
-      const next = fn(prev);
-      persist(next);
-      return next;
-    });
-  }, []);
+    setIsLoading(true);
+    const unsubs: (() => void)[] = [];
+    let essential = 0;
+    const markEssential = () => { if (++essential >= 3) setIsLoading(false); };
+    const fallback = setTimeout(() => setIsLoading(false), 6000);
 
-  const completeSetup = async (name: string, email: string, phone: string) => {
-    const adminStaff: StaffMember = { id: "staff_admin_" + uid(), name, email, phone, role: "Principal", department: "Administration", classSection: "", joinDate: new Date().toISOString().split("T")[0], employeeId: "EIS/ADM/001", isActive: true };
-    await update((prev) => ({ ...prev, setupComplete: true, staff: [adminStaff, ...prev.staff] }));
+    unsubs.push(
+      onSnapshot(doc(db, "settings", "main"), (snap) => {
+        if (snap.exists()) {
+          const d = snap.data();
+          setData((prev) => ({
+            ...prev,
+            settings: {
+              schoolName: d.schoolName ?? DEFAULT_SETTINGS.schoolName,
+              address: d.address ?? DEFAULT_SETTINGS.address,
+              phone: d.phone ?? DEFAULT_SETTINGS.phone,
+              email: d.email ?? DEFAULT_SETTINGS.email,
+              principalName: d.principalName ?? DEFAULT_SETTINGS.principalName,
+              academicYear: d.academicYear ?? DEFAULT_SETTINGS.academicYear,
+              schoolLogo: d.schoolLogo,
+            },
+            firstLoginParents: d.firstLoginParents ?? [],
+            timetable: d.timetable ?? [],
+          }));
+        }
+        markEssential();
+      })
+    );
+
+    unsubs.push(
+      onSnapshot(collection(db, "staff"), (snap) => {
+        setData((prev) => ({
+          ...prev,
+          staff: snap.docs.map((d) => ({ ...d.data(), id: d.id } as StaffMember)),
+        }));
+        markEssential();
+      })
+    );
+
+    unsubs.push(
+      onSnapshot(collection(db, "students"), (snap) => {
+        setData((prev) => ({
+          ...prev,
+          students: snap.docs.map((d) => ({ ...d.data(), id: d.id } as Student)),
+        }));
+        markEssential();
+      })
+    );
+
+    unsubs.push(
+      onSnapshot(
+        query(collection(db, "notices"), orderBy("postedAt", "desc")),
+        (snap) => {
+          setData((prev) => ({
+            ...prev,
+            notices: snap.docs.map((d) => ({
+              ...d.data(),
+              id: d.id,
+              isRead: readIds.current.has(d.id) || (d.data().isRead ?? false),
+            } as AppNotice)),
+          }));
+        }
+      )
+    );
+
+    unsubs.push(
+      onSnapshot(
+        query(collection(db, "homework"), orderBy("postedAt", "desc")),
+        (snap) => {
+          setData((prev) => ({
+            ...prev,
+            homework: snap.docs.map((d) => ({ ...d.data(), id: d.id } as HomeworkEntry)),
+          }));
+        }
+      )
+    );
+
+    unsubs.push(
+      onSnapshot(collection(db, "attendance"), (snap) => {
+        setData((prev) => ({
+          ...prev,
+          attendance: snap.docs.map((d) => ({ ...d.data(), id: d.id } as AttendanceRecord)),
+        }));
+      })
+    );
+
+    unsubs.push(
+      onSnapshot(
+        query(collection(db, "gallery"), orderBy("uploadedAt", "desc")),
+        (snap) => {
+          setData((prev) => ({
+            ...prev,
+            gallery: snap.docs.map((d) => ({ ...d.data(), id: d.id } as GalleryItem)),
+          }));
+        }
+      )
+    );
+
+    unsubs.push(
+      onSnapshot(collection(db, "evaluations"), (snap) => {
+        setData((prev) => ({
+          ...prev,
+          evaluations: snap.docs.map((d) => ({ ...d.data(), id: d.id } as Evaluation)),
+        }));
+      })
+    );
+
+    return () => {
+      clearTimeout(fallback);
+      unsubs.forEach((fn) => fn());
+    };
+  }, [user?.uid, authLoading]);
+
+  const completeSetup = async (_name: string, _email: string, _phone: string) => {};
+
+  const addStaff = async (
+    s: Omit<StaffMember, "id" | "isActive">,
+    password?: string
+  ): Promise<StaffMember> => {
+    let id: string;
+    if (password && s.email) {
+      id = await createFirebaseAccount(s.email, password, {
+        name: s.name, email: s.email, role: "teacher",
+        classSection: s.classSection, department: s.department,
+        phone: s.phone, rollNo: s.employeeId, parentName: "",
+      });
+    } else {
+      id = `staff_${genId()}`;
+    }
+    const member: StaffMember = { ...s, id, isActive: true };
+    await setDoc(doc(db, "staff", id), member);
+    return member;
   };
-  const addStaff = async (s: Omit<StaffMember, "id" | "isActive">) => { const member: StaffMember = { ...s, id: "staff_" + uid(), isActive: true }; await update((prev) => ({ ...prev, staff: [...prev.staff, member] })); return member; };
-  const updateStaff = async (id: string, updates: Partial<StaffMember>) => { await update((prev) => ({ ...prev, staff: prev.staff.map((s) => (s.id === id ? { ...s, ...updates } : s)) })); };
+
+  const updateStaff = async (id: string, updates: Partial<StaffMember>) => {
+    await updateDoc(doc(db, "staff", id), updates as Record<string, unknown>);
+  };
+
   const removeStaff = async (id: string) => {
     const member = data.staff.find((s) => s.id === id);
     if (member && PROTECTED_ADMIN_EMAILS.has(member.email.toLowerCase())) {
       throw new Error("This account is protected and cannot be removed.");
     }
-    await update((prev) => ({ ...prev, staff: prev.staff.map((s) => (s.id === id ? { ...s, isActive: false } : s)) }));
+    await updateDoc(doc(db, "staff", id), { isActive: false });
   };
-  const addStudent = async (s: Omit<Student, "id">) => { const student: Student = { ...s, id: "stu_" + uid() }; await update((prev) => ({ ...prev, students: [...prev.students, student] })); return student; };
-  const updateStudent = async (id: string, updates: Partial<Student>) => { await update((prev) => ({ ...prev, students: prev.students.map((s) => (s.id === id ? { ...s, ...updates } : s)) })); };
-  const removeStudent = async (id: string) => { await update((prev) => ({ ...prev, students: prev.students.filter((s) => s.id !== id) })); };
-  const getAttendanceForDate = (date: string, classSection: string) => data.attendance.find((a) => a.date === date && a.classSection === classSection);
+
+  const addStudent = async (
+    s: Omit<Student, "id">,
+    password?: string
+  ): Promise<Student> => {
+    const id = `stu_${genId()}`;
+    let parentUid: string | undefined;
+    if (password && s.parentEmail) {
+      parentUid = await createFirebaseAccount(s.parentEmail, password, {
+        name: s.name, email: s.parentEmail, role: "parent",
+        classSection: s.classSection, rollNo: s.admissionNo,
+        parentName: s.parentName, phone: s.parentPhone, department: "",
+      });
+    }
+    const student: Student = { ...s, id, ...(parentUid ? { parentUid } : {}) };
+    await setDoc(doc(db, "students", id), student);
+    return student;
+  };
+
+  const updateStudent = async (id: string, updates: Partial<Student>) => {
+    await updateDoc(doc(db, "students", id), updates as Record<string, unknown>);
+  };
+
+  const removeStudent = async (id: string) => {
+    await deleteDoc(doc(db, "students", id));
+  };
+
+  const getAttendanceForDate = (date: string, classSection: string) =>
+    data.attendance.find((a) => a.date === date && a.classSection === classSection);
+
   const markAttendance = async (rec: Omit<AttendanceRecord, "id">) => {
     const existing = getAttendanceForDate(rec.date, rec.classSection);
     if (existing) {
-      await update((prev) => ({ ...prev, attendance: prev.attendance.map((a) => (a.date === rec.date && a.classSection === rec.classSection ? { ...a, records: rec.records, teacherId: rec.teacherId } : a)) }));
+      await updateDoc(doc(db, "attendance", existing.id), {
+        records: rec.records,
+        teacherId: rec.teacherId,
+      });
     } else {
-      const record: AttendanceRecord = { ...rec, id: "att_" + uid() };
-      await update((prev) => ({ ...prev, attendance: [...prev.attendance, record] }));
+      const id = `att_${genId()}`;
+      await setDoc(doc(db, "attendance", id), { ...rec, id });
     }
   };
-  const addHomework = async (hw: Omit<HomeworkEntry, "id" | "postedAt">) => { const entry: HomeworkEntry = { ...hw, id: "hw_" + uid(), postedAt: new Date().toISOString() }; await update((prev) => ({ ...prev, homework: [entry, ...prev.homework] })); return entry; };
-  const addEvaluation = async (ev: Omit<Evaluation, "id">) => { const entry: Evaluation = { ...ev, id: "eval_" + uid() }; await update((prev) => ({ ...prev, evaluations: [entry, ...prev.evaluations] })); };
-  const updateEvaluation = async (id: string, updates: Partial<Evaluation>) => { await update((prev) => ({ ...prev, evaluations: prev.evaluations.map((e) => (e.id === id ? { ...e, ...updates } : e)) })); };
-  const updateSettings = async (s: Partial<AppSettings>) => { await update((prev) => ({ ...prev, settings: { ...prev.settings, ...s } })); };
-  const updateTimetable = async (day: string, slots: TimetableSlot[]) => { await update((prev) => ({ ...prev, timetable: prev.timetable.map((d) => (d.day === day ? { ...d, slots } : d)) })); };
-  const addNotice = async (n: Omit<AppNotice, "id" | "isRead">) => { const notice: AppNotice = { ...n, id: "notice_" + uid(), isRead: false }; await update((prev) => ({ ...prev, notices: [notice, ...prev.notices] })); };
-  const markNoticeRead = async (id: string) => { await update((prev) => ({ ...prev, notices: prev.notices.map((n) => (n.id === id ? { ...n, isRead: true } : n)) })); };
-  const markParentFirstLogin = async (email: string) => { await update((prev) => ({ ...prev, firstLoginParents: prev.firstLoginParents.includes(email) ? prev.firstLoginParents : [...prev.firstLoginParents, email] })); };
-  const addGalleryPhoto = async (item: Omit<GalleryItem, "id" | "uploadedAt">) => { const entry: GalleryItem = { ...item, id: "gal_" + uid(), uploadedAt: new Date().toISOString() }; await update((prev) => ({ ...prev, gallery: [entry, ...prev.gallery] })); };
-  const removeGalleryPhoto = async (id: string) => { await update((prev) => ({ ...prev, gallery: prev.gallery.filter((g) => g.id !== id) })); };
+
+  const addHomework = async (hw: Omit<HomeworkEntry, "id" | "postedAt">): Promise<HomeworkEntry> => {
+    const id = `hw_${genId()}`;
+    const entry: HomeworkEntry = { ...hw, id, postedAt: new Date().toISOString() };
+    await setDoc(doc(db, "homework", id), entry);
+    return entry;
+  };
+
+  const addEvaluation = async (ev: Omit<Evaluation, "id">) => {
+    const id = `eval_${genId()}`;
+    await setDoc(doc(db, "evaluations", id), { ...ev, id });
+  };
+
+  const updateEvaluation = async (id: string, updates: Partial<Evaluation>) => {
+    await updateDoc(doc(db, "evaluations", id), updates as Record<string, unknown>);
+  };
+
+  const updateSettings = async (s: Partial<AppSettings>) => {
+    await updateDoc(doc(db, "settings", "main"), s as Record<string, unknown>);
+  };
+
+  const updateTimetable = async (day: string, slots: TimetableSlot[]) => {
+    const updated = data.timetable.map((d) => (d.day === day ? { ...d, slots } : d));
+    await updateDoc(doc(db, "settings", "main"), { timetable: updated });
+  };
+
+  const addNotice = async (n: Omit<AppNotice, "id" | "isRead">) => {
+    const id = `notice_${genId()}`;
+    await setDoc(doc(db, "notices", id), { ...n, id, isRead: false });
+  };
+
+  const markNoticeRead = async (id: string) => {
+    readIds.current.add(id);
+    AsyncStorage.setItem(READ_NOTICES_KEY, JSON.stringify([...readIds.current]));
+    setData((prev) => ({
+      ...prev,
+      notices: prev.notices.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
+    }));
+  };
+
+  const markParentFirstLogin = async (email: string) => {
+    if (!data.firstLoginParents.includes(email)) {
+      await updateDoc(doc(db, "settings", "main"), {
+        firstLoginParents: arrayUnion(email),
+      });
+    }
+  };
+
+  const addGalleryPhoto = async (item: Omit<GalleryItem, "id" | "uploadedAt">) => {
+    const id = `gal_${genId()}`;
+    const entry: GalleryItem = { ...item, id, uploadedAt: new Date().toISOString() };
+    await setDoc(doc(db, "gallery", id), entry);
+  };
+
+  const removeGalleryPhoto = async (id: string) => {
+    await deleteDoc(doc(db, "gallery", id));
+  };
 
   return (
-    <DataContext.Provider value={{ data, isLoading, completeSetup, addStaff, updateStaff, removeStaff, addStudent, updateStudent, removeStudent, markAttendance, getAttendanceForDate, addHomework, addEvaluation, updateEvaluation, updateSettings, updateTimetable, addNotice, markNoticeRead, markParentFirstLogin, addGalleryPhoto, removeGalleryPhoto }}>
+    <DataContext.Provider
+      value={{
+        data, isLoading, completeSetup,
+        addStaff, updateStaff, removeStaff,
+        addStudent, updateStudent, removeStudent,
+        markAttendance, getAttendanceForDate,
+        addHomework, addEvaluation, updateEvaluation,
+        updateSettings, updateTimetable,
+        addNotice, markNoticeRead, markParentFirstLogin,
+        addGalleryPhoto, removeGalleryPhoto,
+      }}
+    >
       {children}
     </DataContext.Provider>
   );
 }
 
-export function useData() { const ctx = useContext(DataContext); if (!ctx) throw new Error("useData must be used within DataProvider"); return ctx; }
-
-export async function findAccountByEmail(email: string) {
-  try {
-    const stored = await AsyncStorage.getItem(STORAGE_KEY);
-    const appData: AppData = stored ? JSON.parse(stored) : SEED_DATA;
-    const normalized = email.toLowerCase().trim();
-    const staffMember = appData.staff.find((s) => s.email.toLowerCase() === normalized && s.isActive);
-    if (staffMember) {
-      const isAdmin = staffMember.role === "Principal" || staffMember.role === "Vice Principal";
-      return { uid: staffMember.id, name: staffMember.name, role: isAdmin ? ("admin" as const) : ("teacher" as const), classSection: staffMember.classSection, rollNo: staffMember.employeeId, parentName: "", phone: staffMember.phone, email: staffMember.email, department: staffMember.department };
-    }
-    const student = appData.students.find((s) => s.parentEmail.toLowerCase() === normalized);
-    if (student) {
-      return { uid: student.id, name: student.name, role: "parent" as const, classSection: student.classSection, rollNo: student.admissionNo, parentName: student.parentName, phone: student.parentPhone, email: student.parentEmail, department: "" };
-    }
-  } catch {}
-  return null;
+export function useData() {
+  const ctx = useContext(DataContext);
+  if (!ctx) throw new Error("useData must be used within DataProvider");
+  return ctx;
 }

@@ -1,7 +1,10 @@
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView,
+  StyleSheet, Text, TextInput, TouchableOpacity, View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PhotoAvatar } from "@/components/PhotoAvatar";
 import { useAuth } from "@/context/AuthContext";
@@ -33,7 +36,11 @@ function Select({ label, options, value, onChange }: { label: string; options: r
   );
 }
 
-function Field({ label, icon, value, onChange, keyboard, multi, placeholder }: { label: string; icon?: string; value: string; onChange: (v: string) => void; keyboard?: any; multi?: boolean; placeholder?: string }) {
+function Field({ label, icon, value, onChange, keyboard, multi, placeholder, secure, toggle, onToggle }: {
+  label: string; icon?: string; value: string; onChange: (v: string) => void;
+  keyboard?: any; multi?: boolean; placeholder?: string;
+  secure?: boolean; toggle?: boolean; onToggle?: () => void;
+}) {
   return (
     <View style={{ marginBottom: 14 }}>
       <Text style={ss.label}>{label}</Text>
@@ -49,7 +56,13 @@ function Field({ label, icon, value, onChange, keyboard, multi, placeholder }: {
           numberOfLines={multi ? 3 : 1}
           placeholderTextColor="#AAAAAA"
           placeholder={placeholder ?? label}
+          secureTextEntry={secure}
         />
+        {toggle && (
+          <TouchableOpacity onPress={onToggle} style={{ paddingHorizontal: 12 }}>
+            <Feather name={secure ? "eye" : "eye-off"} size={16} color="#888882" />
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -62,6 +75,7 @@ export default function AddStudentPage() {
   const isWeb = Platform.OS === "web";
   const [loading, setLoading] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string | undefined>();
+  const [showPass, setShowPass] = useState(false);
 
   const staffRecord = data.staff.find((s) => s.email.toLowerCase() === user?.email?.toLowerCase());
   const classSection = staffRecord?.classSection ?? user?.classSection ?? "X-B";
@@ -70,6 +84,7 @@ export default function AddStudentPage() {
     name: "", dob: "", gender: "" as "Male" | "Female" | "", bloodGroup: "",
     rollNo: "", admissionNo: "",
     parentName: "", parentPhone: "", parentEmail: "", parentWhatsApp: "", address: "", prevSchool: "",
+    parentPassword: "", confirmPassword: "",
   });
   const set = (k: keyof typeof form, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
@@ -83,24 +98,37 @@ export default function AddStudentPage() {
       Alert.alert("Missing Fields", "Please fill in all required fields.");
       return;
     }
+    if (form.parentPassword && form.parentPassword.length < 8) {
+      Alert.alert("Weak Password", "Parent password must be at least 8 characters.");
+      return;
+    }
+    if (form.parentPassword && form.parentPassword !== form.confirmPassword) {
+      Alert.alert("Password Mismatch", "Passwords do not match.");
+      return;
+    }
     setLoading(true);
     try {
-      const student = await addStudent({
-        name: form.name.trim(), dob: form.dob, gender: form.gender as "Male" | "Female",
-        bloodGroup: form.bloodGroup, classSection, rollNo: form.rollNo.trim(),
-        admissionNo: form.admissionNo.trim(), parentName: form.parentName.trim(),
-        parentPhone: form.parentPhone.trim(), parentEmail: form.parentEmail.trim().toLowerCase(),
-        parentWhatsApp: form.parentWhatsApp.trim() || form.parentPhone.trim(),
-        address: form.address.trim(), prevSchool: form.prevSchool.trim(),
-        profilePhoto,
-      });
-      Alert.alert(
-        "Student Added",
-        `${student.name} has been added to Class ${classSection}.\n\nParent login:\nEmail: ${student.parentEmail}\nPassword: Emerald@123`,
-        [{ text: "OK", onPress: () => router.back() }]
+      const student = await addStudent(
+        {
+          name: form.name.trim(), dob: form.dob, gender: form.gender as "Male" | "Female",
+          bloodGroup: form.bloodGroup, classSection, rollNo: form.rollNo.trim(),
+          admissionNo: form.admissionNo.trim(), parentName: form.parentName.trim(),
+          parentPhone: form.parentPhone.trim(), parentEmail: form.parentEmail.trim().toLowerCase(),
+          parentWhatsApp: form.parentWhatsApp.trim() || form.parentPhone.trim(),
+          address: form.address.trim(), prevSchool: form.prevSchool.trim(),
+          profilePhoto,
+        },
+        form.parentPassword || undefined
       );
-    } catch {
-      Alert.alert("Error", "Failed to add student. Please try again.");
+      const msg = form.parentPassword
+        ? `${student.name} added to Class ${classSection}.\n\nParent account created:\nEmail: ${student.parentEmail}\nPassword: (as set)\n\nParent can now log in from any device.`
+        : `${student.name} has been added to Class ${classSection}.`;
+      Alert.alert("Student Added", msg, [{ text: "OK", onPress: () => router.back() }]);
+    } catch (e: any) {
+      const msg = e?.code === "auth/email-already-in-use"
+        ? "That parent email already has an account. Use a different email."
+        : "Failed to add student. Please try again.";
+      Alert.alert("Error", msg);
     } finally {
       setLoading(false);
     }
@@ -144,12 +172,34 @@ export default function AddStudentPage() {
             <Text style={ss.sectionHeader}>PARENT / GUARDIAN</Text>
             <Field label="Parent / Guardian Name *" icon="users" value={form.parentName} onChange={(v) => set("parentName", v)} />
             <Field label="Parent Phone Number *" icon="phone" value={form.parentPhone} onChange={(v) => set("parentPhone", v)} keyboard="phone-pad" />
-            <Field label="Parent Email *" icon="mail" value={form.parentEmail} onChange={(v) => set("parentEmail", v)} keyboard="email-address" />
+            <Field label="Parent Login Email *" icon="mail" value={form.parentEmail} onChange={(v) => set("parentEmail", v)} keyboard="email-address" />
             <Field label="WhatsApp Number" icon="message-circle" value={form.parentWhatsApp} onChange={(v) => set("parentWhatsApp", v)} keyboard="phone-pad" placeholder="Same as phone if blank" />
+
+            <Text style={ss.sectionHeader}>PARENT APP LOGIN</Text>
+            <Field
+              label="Create Password for Parent *"
+              icon="lock"
+              value={form.parentPassword}
+              onChange={(v) => set("parentPassword", v)}
+              placeholder="Min. 8 characters"
+              secure={!showPass}
+              toggle
+              onToggle={() => setShowPass((p) => !p)}
+            />
+            <Field
+              label="Confirm Password *"
+              icon="lock"
+              value={form.confirmPassword}
+              onChange={(v) => set("confirmPassword", v)}
+              placeholder="Repeat password"
+              secure={!showPass}
+            />
 
             <View style={ss.infoBox}>
               <Feather name="info" size={14} color="#1A5FA5" />
-              <Text style={ss.infoText}>Parent login: their email + default password <Text style={{ fontWeight: "700" }}>Emerald@123</Text></Text>
+              <Text style={ss.infoText}>
+                A login account will be created for the parent with this email and password. They can sign in from any device.
+              </Text>
             </View>
 
             <TouchableOpacity style={ss.btn} onPress={handleSubmit} disabled={loading} activeOpacity={0.85}>
@@ -172,7 +222,7 @@ const ss = StyleSheet.create({
   card: { backgroundColor: "#FFFFFF", borderRadius: 16, padding: 20, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
   photoSection: { alignItems: "center", paddingVertical: 16, gap: 8 },
   photoHint: { fontSize: 12, color: "#888882" },
-  sectionHeader: { fontSize: 11, fontWeight: "700", color: "#888882", letterSpacing: 0.8, marginBottom: 14, marginTop: 4 },
+  sectionHeader: { fontSize: 11, fontWeight: "700", color: "#888882", letterSpacing: 0.8, marginBottom: 14, marginTop: 8 },
   label: { fontSize: 11, fontWeight: "600", color: "#888882", letterSpacing: 0.5, marginBottom: 6 },
   inputRow: { flexDirection: "row", alignItems: "center", backgroundColor: "#F5F4F2", borderRadius: 10, height: 48, gap: 8 },
   input: { flex: 1, fontSize: 14, color: "#1A1A1A", paddingHorizontal: 8 },

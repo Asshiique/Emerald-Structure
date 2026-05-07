@@ -1,0 +1,139 @@
+Replace the entire auth and data system with 
+Firebase. Here are the exact credentials to use:
+
+FIREBASE CONFIG:
+apiKey: "AIzaSyAgTP4Z6hp6sDfScxC5SDLEJTtMLvHBRPg"
+authDomain: "emerald-app-da985.firebaseapp.com"
+projectId: "emerald-app-da985"
+storageBucket: "emerald-app-da985.firebasestorage.app"
+messagingSenderId: "799787181926"
+appId: "1:799787181926:web:473ab1dce9ea158f144aa7"
+
+PART 1 — INSTALL AND SETUP
+Run these commands:
+npm install firebase
+npm install @react-native-async-storage/async-storage
+
+Create a file called firebaseConfig.ts with 
+the config above and initialize Firebase Auth 
+and Firestore.
+
+PART 2 — REPLACE AUTH SYSTEM
+Replace all AsyncStorage-based login with 
+Firebase Authentication:
+
+- Login screen: use signInWithEmailAndPassword()
+- After login: check Firestore users collection 
+  for role field
+- role == admin → Admin Dashboard
+- role == teacher → Teacher Dashboard  
+- role == parent → Parent Home
+- Logout: use signOut()
+- Keep session persistent across app restarts
+
+PART 3 — CREATE ADMIN ACCOUNTS
+Create these 3 accounts in Firebase Auth 
+AND add their profiles to Firestore 
+users collection:
+
+Account 1:
+- email: ashiquemuhammed057@gmail.com
+- password: Emeraldismkd@1234
+- role: admin
+- name: Ashique Mohammed
+
+Account 2:
+- email: emeraldinternationalschoolmkd@gmail.com
+- password: Emeraldismkd@1234
+- role: admin
+- name: Emerald Admin
+
+Account 3:
+- email: shiyasrgz@gmail.com
+- password: Emeraldismkd@1234
+- role: admin
+- name: Shiyas
+
+These 3 accounts must be created automatically 
+when the app first launches if they don't 
+already exist.
+
+PART 4 — ADMIN ADDS TEACHER WITH PASSWORD
+Update Add Staff form to include:
+- Login Email field
+- Create Password field (min 8 characters)
+- Confirm Password field
+
+On submit:
+- Create Firebase Auth account with that 
+  email and password
+- Save staff profile to Firestore users 
+  collection with role = teacher
+- Show: "Account created. [Name] can now 
+  log in from any device"
+
+PART 5 — TEACHER ADDS PARENT WITH PASSWORD
+Update Add Student form to include:
+- Parent Login Email field
+- Create Password for Parent field
+- Confirm Password field
+
+On submit:
+- Create Firebase Auth account for parent
+- Save student profile to Firestore
+- Save parent profile to Firestore users 
+  collection with role = parent
+- Link parent to student via studentId field
+- Show: "Student added. Parent can log in 
+  from any device with the password you set"
+
+PART 6 — MOVE ALL DATA TO FIRESTORE
+Move these from AsyncStorage to Firestore:
+- notices (collection)
+- homework (collection)
+- students (collection)
+- staff (collection)
+- attendance (collection)
+- fees (collection)
+- gallery (collection)
+- settings (single document)
+
+All real-time — when admin posts a notice it 
+appears instantly for all parents on all devices.
+
+PART 7 — APK EXPORT SETUP
+Configure app for APK export:
+
+Update app.json:
+- name: "Emerald International School"
+- slug: "emerald-school"
+- version: "1.0.0"
+- android.package: "com.emerald.internationalschool"
+- android.versionCode: 1
+
+Install EAS CLI and create eas.json:
+{
+  "cli": { "version": ">= 5.0.0" },
+  "build": {
+    "preview": {
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "production": {
+      "android": {
+        "buildType": "app-bundle"
+      }
+    }
+  }
+}
+
+Add to package.json scripts:
+"build:apk": "eas build -p android --profile preview"
+
+After setup provide exact shell commands:
+1. eas login
+2. eas build -p android --profile preview
+
+Keep all existing UI and screens exactly 
+the same. Only replace the backend.

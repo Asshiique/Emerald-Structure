@@ -1,7 +1,10 @@
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView,
+  StyleSheet, Text, TextInput, TouchableOpacity, View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PhotoAvatar } from "@/components/PhotoAvatar";
 import { useData } from "@/context/DataContext";
@@ -34,7 +37,10 @@ function SelectRow({ label, options, value, onChange }: { label: string; options
   );
 }
 
-function Field({ label, icon, value, onChange, keyboard, multi }: { label: string; icon: string; value: string; onChange: (v: string) => void; keyboard?: any; multi?: boolean }) {
+function Field({ label, icon, value, onChange, keyboard, multi, secure, toggle, onToggle }: {
+  label: string; icon: string; value: string; onChange: (v: string) => void;
+  keyboard?: any; multi?: boolean; secure?: boolean; toggle?: boolean; onToggle?: () => void;
+}) {
   return (
     <View style={{ marginBottom: 14 }}>
       <Text style={sStyles.label}>{label}</Text>
@@ -50,7 +56,13 @@ function Field({ label, icon, value, onChange, keyboard, multi }: { label: strin
           numberOfLines={multi ? 3 : 1}
           placeholderTextColor="#AAAAAA"
           placeholder={label}
+          secureTextEntry={secure}
         />
+        {toggle && (
+          <TouchableOpacity onPress={onToggle} style={{ paddingHorizontal: 12 }}>
+            <Feather name={secure ? "eye" : "eye-off"} size={16} color="#888882" />
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -62,7 +74,12 @@ export default function AddStaffPage() {
   const isWeb = Platform.OS === "web";
   const [loading, setLoading] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string | undefined>();
-  const [form, setForm] = useState({ name: "", phone: "", email: "", role: "", department: "", classSection: "", joinDate: new Date().toISOString().split("T")[0], employeeId: "" });
+  const [showPass, setShowPass] = useState(false);
+  const [form, setForm] = useState({
+    name: "", phone: "", email: "", role: "", department: "", classSection: "",
+    joinDate: new Date().toISOString().split("T")[0], employeeId: "",
+    password: "", confirmPassword: "",
+  });
   const set = (k: keyof typeof form, v: string) => setForm((p) => ({ ...p, [k]: v }));
   const needsSection = form.role === "Class Teacher" || form.role === "Subject Teacher";
 
@@ -76,22 +93,40 @@ export default function AddStaffPage() {
       Alert.alert("Missing Fields", "Please fill in all required fields.");
       return;
     }
+    if (!form.password) {
+      Alert.alert("Password Required", "Please set a login password for this staff member.");
+      return;
+    }
+    if (form.password.length < 8) {
+      Alert.alert("Weak Password", "Password must be at least 8 characters.");
+      return;
+    }
+    if (form.password !== form.confirmPassword) {
+      Alert.alert("Password Mismatch", "Passwords do not match.");
+      return;
+    }
     setLoading(true);
     try {
-      const member = await addStaff({
-        name: form.name.trim(), phone: form.phone.trim(),
-        email: form.email.trim().toLowerCase(), role: form.role as any,
-        department: form.department.trim(), classSection: form.classSection,
-        joinDate: form.joinDate, employeeId: form.employeeId.trim(),
-        profilePhoto,
-      });
+      const member = await addStaff(
+        {
+          name: form.name.trim(), phone: form.phone.trim(),
+          email: form.email.trim().toLowerCase(), role: form.role as any,
+          department: form.department.trim(), classSection: form.classSection,
+          joinDate: form.joinDate, employeeId: form.employeeId.trim(),
+          profilePhoto,
+        },
+        form.password
+      );
       Alert.alert(
-        "Staff Member Added",
-        `${member.name} has been added.\n\nLogin credentials:\nEmail: ${member.email}\nPassword: Emerald@123`,
+        "Account Created",
+        `${member.name} can now log in from any device.\n\nEmail: ${member.email}\nPassword: (as set)`,
         [{ text: "OK", onPress: () => router.back() }]
       );
-    } catch {
-      Alert.alert("Error", "Failed to add staff. Please try again.");
+    } catch (e: any) {
+      const msg = e?.code === "auth/email-already-in-use"
+        ? "That email already has an account. Use a different email address."
+        : "Failed to add staff. Please try again.";
+      Alert.alert("Error", msg);
     } finally {
       setLoading(false);
     }
@@ -117,7 +152,7 @@ export default function AddStaffPage() {
 
             <Field label="Full Name *" icon="user" value={form.name} onChange={(v) => set("name", v)} />
             <Field label="Phone Number *" icon="phone" value={form.phone} onChange={(v) => set("phone", v)} keyboard="phone-pad" />
-            <Field label="Email Address *" icon="mail" value={form.email} onChange={(v) => set("email", v)} keyboard="email-address" />
+            <Field label="Login Email *" icon="mail" value={form.email} onChange={(v) => set("email", v)} keyboard="email-address" />
             <Field label="Employee ID *" icon="hash" value={form.employeeId} onChange={(v) => set("employeeId", v)} />
             <SelectRow label="Role *" options={ROLES} value={form.role} onChange={(v) => set("role", v)} />
             <Field label="Department / Subject *" icon="book-open" value={form.department} onChange={(v) => set("department", v)} />
@@ -126,14 +161,36 @@ export default function AddStaffPage() {
             )}
             <Field label="Date of Joining" icon="calendar" value={form.joinDate} onChange={(v) => set("joinDate", v)} />
 
+            <View style={sStyles.divider} />
+            <Text style={sStyles.sectionHeader}>LOGIN CREDENTIALS</Text>
+
+            <Field
+              label="Create Password *"
+              icon="lock"
+              value={form.password}
+              onChange={(v) => set("password", v)}
+              secure={!showPass}
+              toggle
+              onToggle={() => setShowPass((p) => !p)}
+            />
+            <Field
+              label="Confirm Password *"
+              icon="lock"
+              value={form.confirmPassword}
+              onChange={(v) => set("confirmPassword", v)}
+              secure={!showPass}
+            />
+
             <View style={sStyles.infoBox}>
               <Feather name="info" size={14} color="#1A5FA5" />
-              <Text style={sStyles.infoText}>Default login password: <Text style={{ fontWeight: "700" }}>Emerald@123</Text></Text>
+              <Text style={sStyles.infoText}>
+                A login account will be created for this staff member. They can sign in from any device using their email and the password you set.
+              </Text>
             </View>
 
             <TouchableOpacity style={sStyles.btn} onPress={handleSubmit} disabled={loading} activeOpacity={0.85}>
               {loading ? <ActivityIndicator color="#FFFFFF" /> : (
-                <><Feather name="user-plus" size={16} color="#FFFFFF" /><Text style={sStyles.btnText}>Add Staff Member</Text></>
+                <><Feather name="user-plus" size={16} color="#FFFFFF" /><Text style={sStyles.btnText}>Create Account & Add Staff</Text></>
               )}
             </TouchableOpacity>
           </View>
@@ -150,6 +207,8 @@ const sStyles = StyleSheet.create({
   card: { backgroundColor: "#FFFFFF", borderRadius: 16, padding: 20, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
   photoSection: { alignItems: "center", paddingVertical: 16, gap: 8 },
   photoHint: { fontSize: 12, color: "#888882" },
+  sectionHeader: { fontSize: 11, fontWeight: "700", color: "#888882", letterSpacing: 0.8, marginBottom: 14 },
+  divider: { height: 0.5, backgroundColor: "rgba(0,0,0,0.1)", marginVertical: 16 },
   label: { fontSize: 11, fontWeight: "600", color: "#888882", letterSpacing: 0.5, marginBottom: 6 },
   inputRow: { flexDirection: "row", alignItems: "center", backgroundColor: "#F5F4F2", borderRadius: 10, height: 48, gap: 8 },
   input: { flex: 1, fontSize: 14, color: "#1A1A1A", paddingHorizontal: 8 },
@@ -160,8 +219,8 @@ const sStyles = StyleSheet.create({
   dropItemActive: { backgroundColor: "#F8EBEB" },
   dropText: { fontSize: 14, color: "#1A1A1A" },
   dropTextActive: { color: "#C0282A", fontWeight: "600" },
-  infoBox: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#E8F1FB", borderRadius: 10, padding: 12, marginBottom: 16 },
-  infoText: { flex: 1, fontSize: 12, color: "#1A5FA5" },
+  infoBox: { flexDirection: "row", alignItems: "flex-start", gap: 8, backgroundColor: "#E8F1FB", borderRadius: 10, padding: 12, marginBottom: 16 },
+  infoText: { flex: 1, fontSize: 12, color: "#1A5FA5", lineHeight: 18 },
   btn: { backgroundColor: "#C0282A", borderRadius: 12, height: 50, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
   btnText: { fontSize: 15, fontWeight: "700", color: "#FFFFFF" },
 });
