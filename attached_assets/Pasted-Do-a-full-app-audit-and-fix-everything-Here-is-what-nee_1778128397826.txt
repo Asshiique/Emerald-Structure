@@ -1,0 +1,68 @@
+Do a full app audit and fix everything. Here is what needs to be checked and fixed:
+
+PART 1 — NAVIGATION AUDIT
+Go through every single button, card tap, and menu item in the app.
+Fix any navigation that:
+- Does nothing when tapped
+- Goes to the wrong screen
+- Crashes or shows an error
+- Opens a blank screen
+
+Make sure these flows work end to end:
+
+ADMIN flow:
+Login as Admin → Admin Dashboard → 
+  - Manage Staff → Staff List → Tap staff card → Staff Detail → Edit → Save ✓
+  - Manage Students → Student List → Tap student → Student Detail → Edit → Save ✓
+  - Post Notice → Fill form → Submit → Notice appears in Notices screen ✓
+  - Post Homework → Fill form → Submit → Homework appears in Homework screen ✓
+  - App Settings → Edit school info → Save → Updates across app ✓
+  - Timetable → Edit slots → Save → Shows updated timetable ✓
+
+TEACHER flow:
+Login as Teacher → Teacher Dashboard →
+  - View My Students → Student list for their class only ✓
+  - Add Student → Fill form → Submit → Student appears in list ✓
+  - Mark Attendance → Mark P/A/L for each student → Submit → Saved ✓
+  - Post Homework → Fill form → Submit → Appears in homework screen ✓
+  - View Timetable → Shows their class schedule ✓
+
+PARENT flow:
+Login as Parent → Home Dashboard →
+  - Notices → List loads → Tap notice → Full detail opens ✓
+  - Progress → Marks and attendance loads for their child ✓
+  - Fees → Fee status and history loads ✓
+  - Homework → Their child's homework list loads ✓
+  - Profile → Student info loads → ID Card opens ✓
+  - Call School Office → Opens phone dialer ✓
+
+PART 2 — DATA FLOW AUDIT
+Fix any screen that shows empty data when it should show something.
+Make sure:
+- Admin changes (notices, homework, settings) are immediately visible to parents
+- Teacher attendance marks are immediately visible in parent's progress screen
+- Teacher homework posts are immediately visible to students/parents
+- Student added by teacher immediately appears in admin's student list
+- All lists refresh automatically when new data is added
+- No screen shows stale/old data after updates
+
+PART 3 — DATA STORAGE AUDIT
+Make sure all data actually saves and persists:
+- When app is closed and reopened, all data is still there
+- Edited records save correctly and don't revert
+- Deleted records actually disappear from all screens
+- New records added by teacher/admin appear everywhere they should
+
+PART 4 — ROLE SECURITY AUDIT
+Make sure:
+- Parents cannot access admin or teacher screens
+- Teachers cannot access admin-only screens
+- Admin can access everything
+- If a user tries to access a screen they shouldn't, redirect them to their home screen
+
+PART 5 — DEMO LOGIN AUDIT
+Make sure all 3 demo buttons work perfectly:
+- "Demo Admin" → logs in as admin → goes to Admin Dashboard
+- "Demo Teacher" → logs in as teacher → goes to Teacher Dashboard  
+- "Demo Parent" → logs in as parent → goes to Parent Home
+- Each demo account has realistic seeded data to show
