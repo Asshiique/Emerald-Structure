@@ -24,6 +24,51 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+const DEMO_USERS: Record<string, User> = {
+  "admin@emerald.edu": {
+    uid: "admin_001",
+    name: "Dr. Thomas Joseph",
+    role: "admin",
+    classSection: "",
+    rollNo: "",
+    parentName: "",
+    phone: "+91 98765 00001",
+    email: "admin@emerald.edu",
+  },
+  "teacher@emerald.edu": {
+    uid: "staff_001",
+    name: "Mr. Rajan Krishnan",
+    role: "teacher",
+    classSection: "X-B",
+    rollNo: "EIS/TCH/018",
+    parentName: "",
+    phone: "+91 98765 11001",
+    email: "rajan@emerald.edu",
+    department: "Mathematics",
+  },
+  "rajan@emerald.edu": {
+    uid: "staff_001",
+    name: "Mr. Rajan Krishnan",
+    role: "teacher",
+    classSection: "X-B",
+    rollNo: "EIS/TCH/018",
+    parentName: "",
+    phone: "+91 98765 11001",
+    email: "rajan@emerald.edu",
+    department: "Mathematics",
+  },
+  "parent@emerald.edu": {
+    uid: "stu_001",
+    name: "Aryan Sharma",
+    role: "parent",
+    classSection: "X-B",
+    rollNo: "EIS/2024/1024",
+    parentName: "Rajesh Sharma",
+    phone: "+91 98765 43210",
+    email: "parent@emerald.edu",
+  },
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -39,9 +84,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, _password: string): Promise<boolean> => {
     const normalized = email.toLowerCase().trim();
+    const demoUser = DEMO_USERS[normalized];
     const dynamicUser = await findAccountByEmail(normalized);
-    if (!dynamicUser) return false;
-    const u: User = {
+    const chosen = demoUser ?? (dynamicUser ? {
       uid: dynamicUser.uid,
       name: dynamicUser.name,
       role: dynamicUser.role,
@@ -51,9 +96,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       phone: dynamicUser.phone,
       email: dynamicUser.email,
       department: dynamicUser.department,
-    };
-    await AsyncStorage.setItem("@emerald_user", JSON.stringify(u));
-    setUser(u);
+    } : null);
+
+    if (!chosen) return false;
+
+    await AsyncStorage.setItem("@emerald_user", JSON.stringify(chosen));
+    setUser(chosen);
     return true;
   };
 
