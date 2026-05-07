@@ -33,6 +33,7 @@ function RootLayoutNav() {
       <Stack.Screen name="timetable" />
       <Stack.Screen name="attendance" />
       <Stack.Screen name="id-card" />
+      <Stack.Screen name="gallery" />
       <Stack.Screen name="notifications-settings" />
       <Stack.Screen name="admin/index" />
       <Stack.Screen name="admin/staff/index" />
@@ -64,9 +65,7 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync();
-    }
+    if (fontsLoaded || fontError) { SplashScreen.hideAsync(); }
   }, [fontsLoaded, fontError]);
 
   if (!fontsLoaded && !fontError) return null;

@@ -1,21 +1,35 @@
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useData } from "@/context/DataContext";
+import { pickImageWithChoice } from "@/hooks/useImagePicker";
+import { useRoleGuard } from "@/hooks/useRoleGuard";
 
 export default function AppSettingsPage() {
+  useRoleGuard(["admin"]);
   const { data, updateSettings } = useData();
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
   const [form, setForm] = useState(data.settings);
   const [saving, setSaving] = useState(false);
+  const [logoPickerLoading, setLogoPickerLoading] = useState(false);
 
   useEffect(() => { setForm(data.settings); }, [data.settings]);
 
   const update = (key: keyof typeof form, val: string) =>
     setForm((prev) => ({ ...prev, [key]: val }));
+
+  const handlePickLogo = async () => {
+    setLogoPickerLoading(true);
+    try {
+      const uri = await pickImageWithChoice();
+      if (uri) { await updateSettings({ schoolLogo: uri }); setForm((prev) => ({ ...prev, schoolLogo: uri })); }
+    } finally {
+      setLogoPickerLoading(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!form.schoolName.trim()) { Alert.alert("Required", "School name is required."); return; }
@@ -47,6 +61,29 @@ export default function AppSettingsPage() {
 
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 32 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           <View style={styles.card}>
+            <Text style={styles.sectionLabel}>SCHOOL LOGO</Text>
+            <View style={styles.logoRow}>
+              {form.schoolLogo ? (
+                <Image source={{ uri: form.schoolLogo }} style={styles.logoPreview} resizeMode="cover" />
+              ) : (
+                <View style={styles.logoPlaceholder}>
+                  <Feather name="shield" size={32} color="#C0282A" />
+                </View>
+              )}
+              <View style={{ flex: 1 }}>
+                <Text style={styles.logoTitle}>School Logo</Text>
+                <Text style={styles.logoSub}>Shown on login screen and ID card</Text>
+                <TouchableOpacity style={styles.logoBtn} onPress={handlePickLogo} disabled={logoPickerLoading} activeOpacity={0.8}>
+                  {logoPickerLoading ? <ActivityIndicator size="small" color="#C0282A" /> : (
+                    <><Feather name="upload" size={13} color="#C0282A" /><Text style={styles.logoBtnText}>{form.schoolLogo ? "Change Logo" : "Upload Logo"}</Text></>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.sectionLabel}>SCHOOL INFORMATION</Text>
             {FIELDS.map((f) => (
               <View key={f.key} style={{ marginBottom: 16 }}>
                 <Text style={styles.label}>{f.label}</Text>
@@ -54,7 +91,7 @@ export default function AppSettingsPage() {
                   <Feather name={f.icon as any} size={16} color="#888882" style={{ marginLeft: 12, marginTop: f.multi ? 2 : 0 }} />
                   <TextInput
                     style={[styles.input, f.multi && { height: 60, textAlignVertical: "top" }]}
-                    value={form[f.key]}
+                    value={(form as any)[f.key] ?? ""}
                     onChangeText={(v) => update(f.key, v)}
                     keyboardType={f.keyboard}
                     autoCapitalize={f.keyboard === "email-address" ? "none" : "words"}
@@ -66,10 +103,7 @@ export default function AppSettingsPage() {
             ))}
             <TouchableOpacity style={styles.btn} onPress={handleSave} disabled={saving} activeOpacity={0.85}>
               {saving ? <ActivityIndicator color="#FFFFFF" /> : (
-                <>
-                  <Feather name="save" size={16} color="#FFFFFF" />
-                  <Text style={styles.btnText}>Save Settings</Text>
-                </>
+                <><Feather name="save" size={16} color="#FFFFFF" /><Text style={styles.btnText}>Save Settings</Text></>
               )}
             </TouchableOpacity>
           </View>
@@ -89,6 +123,14 @@ const styles = StyleSheet.create({
   backBtn: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   headerTitle: { flex: 1, fontSize: 18, fontWeight: "700", color: "#FFFFFF", textAlign: "center" },
   card: { backgroundColor: "#FFFFFF", borderRadius: 16, padding: 20, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2, marginBottom: 12 },
+  sectionLabel: { fontSize: 11, fontWeight: "700", color: "#888882", letterSpacing: 0.8, marginBottom: 14 },
+  logoRow: { flexDirection: "row", alignItems: "center", gap: 16 },
+  logoPreview: { width: 72, height: 72, borderRadius: 14, backgroundColor: "#F5F4F2" },
+  logoPlaceholder: { width: 72, height: 72, borderRadius: 14, backgroundColor: "#F8EBEB", alignItems: "center", justifyContent: "center" },
+  logoTitle: { fontSize: 14, fontWeight: "600", color: "#1A1A1A", marginBottom: 4 },
+  logoSub: { fontSize: 12, color: "#888882", marginBottom: 10, lineHeight: 16 },
+  logoBtn: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", borderWidth: 1.5, borderColor: "#C0282A", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
+  logoBtnText: { fontSize: 13, fontWeight: "600", color: "#C0282A" },
   label: { fontSize: 11, fontWeight: "600", color: "#888882", letterSpacing: 0.5, marginBottom: 6 },
   inputRow: { flexDirection: "row", alignItems: "center", backgroundColor: "#F5F4F2", borderRadius: 10, height: 48, gap: 8 },
   input: { flex: 1, fontSize: 14, color: "#1A1A1A", paddingHorizontal: 8, paddingVertical: 0 },

@@ -3,7 +3,9 @@ import { router } from "expo-router";
 import React, { useState } from "react";
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { PhotoAvatar } from "@/components/PhotoAvatar";
 import { useData } from "@/context/DataContext";
+import { pickImageWithChoice } from "@/hooks/useImagePicker";
 
 const ROLES = ["Class Teacher", "Subject Teacher", "Office Staff", "Supporting Staff", "Principal", "Vice Principal"] as const;
 const SECTIONS = ["LKG", "UKG", "I-A", "I-B", "II-A", "II-B", "III-A", "III-B", "IV-A", "IV-B", "V-A", "V-B", "VI-A", "VI-B", "VII-A", "VII-B", "VIII-A", "VIII-B", "IX-A", "IX-B", "X-A", "X-B", "XI Science", "XI Commerce", "XII Science", "XII Commerce"];
@@ -59,9 +61,15 @@ export default function AddStaffPage() {
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
   const [loading, setLoading] = useState(false);
+  const [profilePhoto, setProfilePhoto] = useState<string | undefined>();
   const [form, setForm] = useState({ name: "", phone: "", email: "", role: "", department: "", classSection: "", joinDate: new Date().toISOString().split("T")[0], employeeId: "" });
   const set = (k: keyof typeof form, v: string) => setForm((p) => ({ ...p, [k]: v }));
   const needsSection = form.role === "Class Teacher" || form.role === "Subject Teacher";
+
+  const handlePickPhoto = async () => {
+    const uri = await pickImageWithChoice();
+    if (uri) setProfilePhoto(uri);
+  };
 
   const handleSubmit = async () => {
     if (!form.name || !form.phone || !form.email || !form.role || !form.department || !form.employeeId) {
@@ -71,14 +79,11 @@ export default function AddStaffPage() {
     setLoading(true);
     try {
       const member = await addStaff({
-        name: form.name.trim(),
-        phone: form.phone.trim(),
-        email: form.email.trim().toLowerCase(),
-        role: form.role as any,
-        department: form.department.trim(),
-        classSection: form.classSection,
-        joinDate: form.joinDate,
-        employeeId: form.employeeId.trim(),
+        name: form.name.trim(), phone: form.phone.trim(),
+        email: form.email.trim().toLowerCase(), role: form.role as any,
+        department: form.department.trim(), classSection: form.classSection,
+        joinDate: form.joinDate, employeeId: form.employeeId.trim(),
+        profilePhoto,
       });
       Alert.alert(
         "Staff Member Added",
@@ -105,6 +110,11 @@ export default function AddStaffPage() {
 
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 32 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           <View style={sStyles.card}>
+            <View style={sStyles.photoSection}>
+              <PhotoAvatar photo={profilePhoto} name={form.name || "?"} size={90} onPress={handlePickPhoto} showCamera borderColor="#C0282A" />
+              <Text style={sStyles.photoHint}>Tap to add profile photo</Text>
+            </View>
+
             <Field label="Full Name *" icon="user" value={form.name} onChange={(v) => set("name", v)} />
             <Field label="Phone Number *" icon="phone" value={form.phone} onChange={(v) => set("phone", v)} keyboard="phone-pad" />
             <Field label="Email Address *" icon="mail" value={form.email} onChange={(v) => set("email", v)} keyboard="email-address" />
@@ -118,15 +128,12 @@ export default function AddStaffPage() {
 
             <View style={sStyles.infoBox}>
               <Feather name="info" size={14} color="#1A5FA5" />
-              <Text style={sStyles.infoText}>Default login password will be set to: <Text style={{ fontWeight: "700" }}>Emerald@123</Text></Text>
+              <Text style={sStyles.infoText}>Default login password: <Text style={{ fontWeight: "700" }}>Emerald@123</Text></Text>
             </View>
 
             <TouchableOpacity style={sStyles.btn} onPress={handleSubmit} disabled={loading} activeOpacity={0.85}>
               {loading ? <ActivityIndicator color="#FFFFFF" /> : (
-                <>
-                  <Feather name="user-plus" size={16} color="#FFFFFF" />
-                  <Text style={sStyles.btnText}>Add Staff Member</Text>
-                </>
+                <><Feather name="user-plus" size={16} color="#FFFFFF" /><Text style={sStyles.btnText}>Add Staff Member</Text></>
               )}
             </TouchableOpacity>
           </View>
@@ -141,6 +148,8 @@ const sStyles = StyleSheet.create({
   backBtn: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   headerTitle: { flex: 1, fontSize: 18, fontWeight: "700", color: "#FFFFFF", textAlign: "center" },
   card: { backgroundColor: "#FFFFFF", borderRadius: 16, padding: 20, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
+  photoSection: { alignItems: "center", paddingVertical: 16, gap: 8 },
+  photoHint: { fontSize: 12, color: "#888882" },
   label: { fontSize: 11, fontWeight: "600", color: "#888882", letterSpacing: 0.5, marginBottom: 6 },
   inputRow: { flexDirection: "row", alignItems: "center", backgroundColor: "#F5F4F2", borderRadius: 10, height: 48, gap: 8 },
   input: { flex: 1, fontSize: 14, color: "#1A1A1A", paddingHorizontal: 8 },

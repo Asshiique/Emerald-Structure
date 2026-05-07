@@ -20,52 +20,45 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
+  updateUserPhoto: (photo: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+const HARDCODED_ADMINS: Record<string, { password: string; user: User }> = {
+  "ashiquemuhammed057@gmail.com": {
+    password: "Emeraldismkd@1234",
+    user: { uid: "admin_ashique", name: "Ashique Mohammed", role: "admin", classSection: "", rollNo: "", parentName: "", phone: "", email: "ashiquemuhammed057@gmail.com" },
+  },
+  "emeraldinternationalmkd@gmail.com": {
+    password: "Emeraldismkd@1234",
+    user: { uid: "admin_emerald", name: "Emerald Admin", role: "admin", classSection: "", rollNo: "", parentName: "", phone: "", email: "emeraldinternationalmkd@gmail.com" },
+  },
+  "shiyasrgz@gmail.com": {
+    password: "Emeraldismkd@1234",
+    user: { uid: "admin_shiyas", name: "Shiyas", role: "admin", classSection: "", rollNo: "", parentName: "", phone: "", email: "shiyasrgz@gmail.com" },
+  },
+};
+
 const DEMO_USERS: Record<string, User> = {
   "admin@emerald.edu": {
-    uid: "admin_001",
-    name: "Dr. Thomas Joseph",
-    role: "admin",
-    classSection: "",
-    rollNo: "",
-    parentName: "",
-    phone: "+91 98765 00001",
-    email: "admin@emerald.edu",
+    uid: "admin_001", name: "Dr. Thomas Joseph", role: "admin",
+    classSection: "", rollNo: "", parentName: "", phone: "+91 98765 00001", email: "admin@emerald.edu",
   },
   "teacher@emerald.edu": {
-    uid: "staff_001",
-    name: "Mr. Rajan Krishnan",
-    role: "teacher",
-    classSection: "X-B",
-    rollNo: "EIS/TCH/018",
-    parentName: "",
-    phone: "+91 98765 11001",
-    email: "rajan@emerald.edu",
-    department: "Mathematics",
+    uid: "staff_001", name: "Mr. Rajan Krishnan", role: "teacher",
+    classSection: "X-B", rollNo: "EIS/TCH/018", parentName: "",
+    phone: "+91 98765 11001", email: "rajan@emerald.edu", department: "Mathematics",
   },
   "rajan@emerald.edu": {
-    uid: "staff_001",
-    name: "Mr. Rajan Krishnan",
-    role: "teacher",
-    classSection: "X-B",
-    rollNo: "EIS/TCH/018",
-    parentName: "",
-    phone: "+91 98765 11001",
-    email: "rajan@emerald.edu",
-    department: "Mathematics",
+    uid: "staff_001", name: "Mr. Rajan Krishnan", role: "teacher",
+    classSection: "X-B", rollNo: "EIS/TCH/018", parentName: "",
+    phone: "+91 98765 11001", email: "rajan@emerald.edu", department: "Mathematics",
   },
   "parent@emerald.edu": {
-    uid: "stu_001",
-    name: "Aryan Sharma",
-    role: "parent",
-    classSection: "X-B",
-    rollNo: "EIS/2024/1024",
-    parentName: "Rajesh Sharma",
-    phone: "+91 98765 43210",
-    email: "parent@emerald.edu",
+    uid: "stu_001", name: "Aryan Sharma", role: "parent",
+    classSection: "X-B", rollNo: "EIS/2024/1024", parentName: "Rajesh Sharma",
+    phone: "+91 98765 43210", email: "parent@emerald.edu",
   },
 };
 
@@ -75,31 +68,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     AsyncStorage.getItem("@emerald_user").then((stored) => {
-      if (stored) {
-        try { setUser(JSON.parse(stored)); } catch {}
-      }
+      if (stored) { try { setUser(JSON.parse(stored)); } catch {} }
       setIsLoading(false);
     });
   }, []);
 
-  const login = async (email: string, _password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<boolean> => {
     const normalized = email.toLowerCase().trim();
+
+    const adminEntry = HARDCODED_ADMINS[normalized];
+    if (adminEntry) {
+      if (password !== adminEntry.password) return false;
+      await AsyncStorage.setItem("@emerald_user", JSON.stringify(adminEntry.user));
+      setUser(adminEntry.user);
+      return true;
+    }
+
     const demoUser = DEMO_USERS[normalized];
     const dynamicUser = await findAccountByEmail(normalized);
-    const chosen = demoUser ?? (dynamicUser ? {
-      uid: dynamicUser.uid,
-      name: dynamicUser.name,
-      role: dynamicUser.role,
-      classSection: dynamicUser.classSection,
-      rollNo: dynamicUser.rollNo,
-      parentName: dynamicUser.parentName,
-      phone: dynamicUser.phone,
-      email: dynamicUser.email,
-      department: dynamicUser.department,
+
+    const chosen: User | null = demoUser ?? (dynamicUser ? {
+      uid: dynamicUser.uid, name: dynamicUser.name, role: dynamicUser.role,
+      classSection: dynamicUser.classSection, rollNo: dynamicUser.rollNo,
+      parentName: dynamicUser.parentName, phone: dynamicUser.phone,
+      email: dynamicUser.email, department: dynamicUser.department,
     } : null);
 
     if (!chosen) return false;
-
     await AsyncStorage.setItem("@emerald_user", JSON.stringify(chosen));
     setUser(chosen);
     return true;
@@ -110,7 +105,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   };
 
-  return <AuthContext.Provider value={{ user, isLoading, login, logout }}>{children}</AuthContext.Provider>;
+  const updateUserPhoto = async (photo: string) => {
+    if (!user) return;
+    const updated = { ...user, profilePhoto: photo };
+    await AsyncStorage.setItem("@emerald_user", JSON.stringify(updated));
+    setUser(updated);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, isLoading, login, logout, updateUserPhoto }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {

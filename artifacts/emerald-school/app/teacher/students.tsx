@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import React, { useState } from "react";
 import { Linking, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { PhotoAvatar } from "@/components/PhotoAvatar";
 import { useAuth } from "@/context/AuthContext";
 import { useData } from "@/context/DataContext";
 
@@ -18,12 +19,7 @@ export default function ViewStudentsPage() {
 
   const students = data.students
     .filter((s) => s.classSection === classSection)
-    .filter((s) =>
-      search === "" ||
-      s.name.toLowerCase().includes(search.toLowerCase()) ||
-      s.rollNo.includes(search) ||
-      s.parentName.toLowerCase().includes(search.toLowerCase())
-    )
+    .filter((s) => search === "" || s.name.toLowerCase().includes(search.toLowerCase()) || s.rollNo.includes(search) || s.parentName.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => parseInt(a.rollNo) - parseInt(b.rollNo));
 
   return (
@@ -71,13 +67,11 @@ export default function ViewStudentsPage() {
         ) : (
           students.map((s) => (
             <View key={s.id} style={styles.card}>
-              <View style={styles.rollBadge}>
-                <Text style={styles.rollNum}>{s.rollNo}</Text>
-              </View>
+              <PhotoAvatar photo={s.profilePhoto} name={s.name} size={44} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.studentName}>{s.name}</Text>
                 <Text style={styles.parentName}>{s.parentName}</Text>
-                <Text style={styles.admNo}>{s.admissionNo}</Text>
+                <Text style={styles.admNo}>{s.admissionNo} · Roll {s.rollNo}</Text>
               </View>
               <View style={styles.actions}>
                 <TouchableOpacity style={styles.callBtn} onPress={() => Linking.openURL(`tel:${s.parentPhone}`)}>
@@ -104,8 +98,6 @@ const styles = StyleSheet.create({
   searchRow: { flexDirection: "row", alignItems: "center", backgroundColor: "#FFFFFF", borderRadius: 12, height: 44, shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 1, marginBottom: 12 },
   searchInput: { flex: 1, fontSize: 14, color: "#1A1A1A", paddingHorizontal: 8 },
   card: { backgroundColor: "#FFFFFF", borderRadius: 12, padding: 14, marginBottom: 8, flexDirection: "row", alignItems: "center", gap: 12, shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 },
-  rollBadge: { width: 36, height: 36, borderRadius: 10, backgroundColor: "#F8EBEB", alignItems: "center", justifyContent: "center" },
-  rollNum: { fontSize: 14, fontWeight: "700", color: "#C0282A" },
   studentName: { fontSize: 14, fontWeight: "700", color: "#1A1A1A", marginBottom: 2 },
   parentName: { fontSize: 12, color: "#555550" },
   admNo: { fontSize: 11, color: "#888882" },
