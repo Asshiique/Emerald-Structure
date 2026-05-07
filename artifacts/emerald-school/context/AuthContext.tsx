@@ -30,9 +30,9 @@ const HARDCODED_ADMINS: Record<string, { password: string; user: User }> = {
     password: "Emeraldismkd@1234",
     user: { uid: "admin_ashique", name: "Ashique Mohammed", role: "admin", classSection: "", rollNo: "", parentName: "", phone: "", email: "ashiquemuhammed057@gmail.com" },
   },
-  "emeraldinternationalmkd@gmail.com": {
+  "emeraldinternationalschoolmkd@gmail.com": {
     password: "Emeraldismkd@1234",
-    user: { uid: "admin_emerald", name: "Emerald Admin", role: "admin", classSection: "", rollNo: "", parentName: "", phone: "", email: "emeraldinternationalmkd@gmail.com" },
+    user: { uid: "admin_emerald", name: "Emerald Admin", role: "admin", classSection: "", rollNo: "", parentName: "", phone: "", email: "emeraldinternationalschoolmkd@gmail.com" },
   },
   "shiyasrgz@gmail.com": {
     password: "Emeraldismkd@1234",

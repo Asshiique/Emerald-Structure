@@ -79,7 +79,7 @@ export default function SetupPage() {
             <Feather name="user" size={16} color="#888882" style={{ marginLeft: 12 }} />
             <TextInput
               style={styles.input}
-              placeholder="Dr. Thomas Joseph"
+              placeholder="Principal / Admin Name"
               placeholderTextColor="#AAAAAA"
               value={name}
               onChangeText={setName}

@@ -33,7 +33,7 @@ export default function FeesPage() {
         <View style={styles.circle1} />
         <View style={styles.circle2} />
         <Text style={styles.headerTitle}>Fees</Text>
-        <Text style={styles.headerSub}>2024–25 Academic Year</Text>
+        <Text style={styles.headerSub}>2025–26 Academic Year</Text>
       </View>
 
       {overdueItem && (
@@ -68,7 +68,7 @@ export default function FeesPage() {
         </View>
       </View>
 
-      <Text style={styles.sectionLabel}>FEE STRUCTURE — 2024-25</Text>
+      <Text style={styles.sectionLabel}>FEE STRUCTURE — 2025-26</Text>
       <View style={styles.structureCard}>
         <View style={styles.structureRow}>
           <Text style={styles.structureItem}>Quarterly Fee (×3)</Text>
@@ -101,7 +101,7 @@ export default function FeesPage() {
         <Feather name="info" size={14} color="#8B6010" />
         <Text style={styles.noteText}>
           For fee-related queries, contact the school office at{" "}
-          <Text style={{ fontWeight: "600" }}>+91 98765 43210</Text>
+          <Text style={{ fontWeight: "600" }}>+91 6238960292</Text>
         </Text>
       </View>
     </ScrollView>

@@ -3,7 +3,7 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 
 export const PROTECTED_ADMIN_EMAILS = new Set([
   "ashiquemuhammed057@gmail.com",
-  "emeraldinternationalmkd@gmail.com",
+  "emeraldinternationalschoolmkd@gmail.com",
   "shiyasrgz@gmail.com",
 ]);
 
@@ -141,11 +141,11 @@ const SEED_DATA: AppData = {
   setupComplete: true,
   settings: {
     schoolName: "Emerald International School",
-    address: "Mannarkkad, Palakkad, Kerala 678583",
-    phone: "+91 4924 222 001",
-    email: "info@emeraldschool.edu",
-    principalName: "Dr. Thomas Joseph",
-    academicYear: "2024-25",
+    address: "Vadakkumannam, Mannarkkad, Palakkad, Kerala",
+    phone: "+91 6238960292, +91 7356596745",
+    email: "emeraldinternationalschoolmkd@gmail.com",
+    principalName: "Shalima Soman",
+    academicYear: "2025-26",
   },
   firstLoginParents: [],
   gallery: [],
@@ -231,8 +231,18 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           if (!parsed.notices) parsed.notices = SEED_DATA.notices;
           if (!parsed.timetable) parsed.timetable = SEED_DATA.timetable;
           if (!parsed.gallery) parsed.gallery = [];
+          parsed.settings = {
+            ...parsed.settings,
+            schoolName: SEED_DATA.settings.schoolName,
+            address: SEED_DATA.settings.address,
+            phone: SEED_DATA.settings.phone,
+            email: SEED_DATA.settings.email,
+            principalName: SEED_DATA.settings.principalName,
+            academicYear: SEED_DATA.settings.academicYear,
+          };
           setData(parsed);
-        } catch {}
+          persist(parsed);
+        } catch { persist(SEED_DATA); }
       } else {
         persist(SEED_DATA);
       }
