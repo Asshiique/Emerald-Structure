@@ -1,0 +1,80 @@
+Add photo/image support throughout the app:
+
+PART 1 — STUDENT PROFILE PHOTO
+When teacher adds or edits a student:
+- Add "Profile Photo" field in the student form
+- Show a circular avatar placeholder with camera icon
+- On tap: open image picker (camera or gallery)
+- Selected photo saves with student profile
+- Photo shows in:
+  * Student list card (small circular avatar)
+  * Student detail page (large circular avatar)
+  * Student ID Card (prominent photo in center)
+  * Parent's profile/home screen
+  * Attendance list next to student name
+
+PART 2 — STAFF PROFILE PHOTO
+When admin adds or edits a staff member:
+- Add "Profile Photo" field in staff form
+- Same circular avatar with camera icon tap to change
+- Photo shows in:
+  * Staff list card
+  * Staff detail page
+  * Teacher's own profile screen
+  * Admin's staff management list
+
+PART 3 — STUDENT ID CARD WITH PHOTO
+Update the Student ID Card screen:
+- Show student's actual photo in the ID card
+- If no photo uploaded: show initials avatar in 
+  red circle as fallback
+- ID card layout:
+  * Top: school logo + school name (red header)
+  * Middle: student photo (circular, 80px, with 
+    red border)
+  * Student name, class, roll number, student ID
+  * Blood group, academic year
+  * Bottom: "Valid for Academic Year 2024-25"
+
+PART 4 — SCHOOL LOGO
+In App Settings (admin):
+- Add "School Logo" option
+- On tap: open image picker
+- Selected logo shows in:
+  * Splash screen
+  * Login screen header
+  * Student ID card
+  * App icon area in settings
+- If no logo uploaded: use the shield icon as 
+  fallback
+
+PART 5 — GALLERY SECTION
+Add a Gallery screen to the app:
+- Add "Gallery" option in the bottom nav or 
+  More section
+- Admin can upload photos with:
+  * Photo (from camera or gallery)
+  * Title (e.g. "Annual Day – Tarang 2025")
+  * Category (Events / Sports / Academic / 
+    Cultural)
+  * Date
+- Photos display in a 2-column grid
+- Tap any photo → opens full screen view
+- Parents and students can view but not upload
+- Admin can delete photos
+
+PART 6 — TECHNICAL REQUIREMENTS
+- Use expo-image-picker for all image selection
+- Use expo-file-system to save images locally
+- Store image as base64 string in AsyncStorage 
+  so photos persist after app restart
+- All image uploads work on both Android and iOS
+- Show loading indicator while image is being 
+  processed
+- If image too large (over 2MB): automatically 
+  compress before saving
+- All existing screens that show avatars: update 
+  to show real photo if available, initials if not
+
+Keep all existing features intact. 
+Only add photo functionality on top.

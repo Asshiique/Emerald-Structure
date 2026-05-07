@@ -1,0 +1,106 @@
+Do the following updates to the app:
+
+PART 1 — HARDCODED ADMIN ACCOUNTS
+Create these exact admin accounts in the app's auth system:
+
+Admin Account 1:
+- Email: ashiquemuhammed057@gmail.com
+- Password: Emeraldismkd@1234
+- Role: admin
+- Name: Ashique Mohammed
+
+Admin Account 2:
+- Email: emeraldinternationalmkd@gmail.com
+- Password: Emeraldismkd@1234
+- Role: admin
+- Name: Emerald Admin
+
+Admin Account 3:
+- Email: shiyasrgz@gmail.com
+- Password: Emeraldismkd@1234
+- Role: admin
+- Name: Shiyas
+
+All 3 accounts must:
+- Log in with their email and the password above
+- Go directly to Admin Dashboard after login
+- Have full admin access to all screens
+
+PART 2 — TEACHER ADDS STUDENT
+Make sure class teachers can fully add and manage 
+student profiles through the app.
+
+Teacher Dashboard must have "Add Student" button that opens a form with:
+- Student Full Name
+- Date of Birth
+- Gender (Male/Female)
+- Blood Group (A+, A-, B+, B-, O+, O-, AB+, AB-)
+- Class Section (auto-filled from teacher's class)
+- Roll Number
+- Admission Number
+- Parent Full Name
+- Parent Phone Number (becomes parent login phone)
+- Parent Email (becomes parent login email)
+- Parent WhatsApp Number
+- Home Address
+- Previous School (optional)
+
+On submit:
+- Save student profile to DataContext and AsyncStorage
+- Create parent login account with their email
+- Default parent password: Emerald@123
+- Show success message: "Student added. Parent can 
+  log in with [email] and password: Emerald@123"
+- Student immediately appears in teacher's student 
+  list and admin's student list
+
+Teacher can also:
+- View all students in their class
+- Edit any student's details
+- Call parent directly from student card
+- View student's attendance and homework status
+
+PART 3 — ADMIN ADDS TEACHER/STAFF
+Admin can fully add and manage all staff through the app.
+
+Admin Panel must have "Add Staff" button with form:
+- Full Name
+- Phone Number
+- Email Address (becomes their login email)
+- Role (Class Teacher / Subject Teacher / Office 
+  Staff / Supporting Staff / Principal / 
+  Vice Principal)
+- Subject/Department
+- Class Section Assigned (for teachers)
+- Employee ID
+- Date of Joining
+
+On submit:
+- Save staff profile to DataContext and AsyncStorage
+- Create login account with their email
+- Default staff password: Emerald@123
+- Show success message: "Staff added. They can log 
+  in with [email] and password: Emerald@123"
+- Staff immediately appears in admin's staff list
+
+Admin can also:
+- View all staff with search and filter
+- Edit any staff member's details
+- Remove/deactivate staff account
+- See which teacher is assigned to which class
+
+PART 4 — SECURITY
+- The 3 admin emails above can never be deleted 
+  from the system
+- Admin accounts cannot be demoted to teacher 
+  or parent role
+- Passwords are stored securely
+- Remove the 3 admin emails and password from 
+  any visible UI — they should only work at login, 
+  never be shown on screen
+
+PART 5 — DEMO ACCOUNTS UPDATE
+Keep the 3 demo buttons on login screen but update:
+- Demo Admin → logs in as ashiquemuhammed057@gmail.com
+- Demo Teacher → logs in as demo teacher account
+- Demo Parent → logs in as demo parent account
