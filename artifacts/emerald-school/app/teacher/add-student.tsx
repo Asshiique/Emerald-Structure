@@ -116,7 +116,7 @@ export default function AddStudentPage() {
           parentPhone: form.parentPhone.trim(), parentEmail: form.parentEmail.trim().toLowerCase(),
           parentWhatsApp: form.parentWhatsApp.trim() || form.parentPhone.trim(),
           address: form.address.trim(), prevSchool: form.prevSchool.trim(),
-          profilePhoto,
+          ...(profilePhoto ? { profilePhoto } : {}),
         },
         form.parentPassword || undefined
       );

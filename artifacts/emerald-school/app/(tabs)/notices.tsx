@@ -1,10 +1,17 @@
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CategoryChip } from "@/components/CategoryChip";
 import { NoticeCard } from "@/components/NoticeCard";
-import { useData } from "@/context/DataContext";
+import { useMarkNoticeReadLocally, useNotices } from "@/hooks/useNotices";
 
 const CATEGORIES = ["All", "Academic", "Events", "Fees", "Sports", "General"];
 
@@ -14,8 +21,9 @@ export default function NoticesPage() {
   const topPad = isWeb ? 67 : insets.top;
   const bottomPad = isWeb ? 34 : insets.bottom;
   const [selected, setSelected] = useState("All");
-  const { data, markNoticeRead } = useData();
-  const notices = data.notices;
+
+  const { notices, isLoading, isError } = useNotices();
+  const markNoticeRead = useMarkNoticeReadLocally();
 
   const unreadCount = notices.filter((n) => !n.isRead).length;
 
@@ -72,7 +80,17 @@ export default function NoticesPage() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.card}>
-          {filtered.length === 0 ? (
+          {isLoading ? (
+            <View style={styles.emptyState}>
+              <ActivityIndicator color="#C0282A" />
+              <Text style={styles.emptySub}>Loading notices…</Text>
+            </View>
+          ) : isError ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyTitle}>Could not load notices</Text>
+              <Text style={styles.emptySub}>Check your connection and try again</Text>
+            </View>
+          ) : filtered.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyTitle}>No notices</Text>
               <Text style={styles.emptySub}>Nothing in this category yet</Text>
@@ -104,7 +122,7 @@ const styles = StyleSheet.create({
   unreadText: { fontSize: 12, fontWeight: "700", color: "#C0282A" },
   chipsContainer: { backgroundColor: "#F5F4F2", flexGrow: 0 },
   card: { backgroundColor: "#FFFFFF", borderRadius: 14, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2, overflow: "hidden" },
-  emptyState: { padding: 32, alignItems: "center" },
+  emptyState: { padding: 32, alignItems: "center", gap: 8 },
   emptyTitle: { fontSize: 16, fontWeight: "600", color: "#1A1A1A" },
   emptySub: { fontSize: 13, color: "#888882", marginTop: 4 },
 });

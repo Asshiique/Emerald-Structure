@@ -5,18 +5,27 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type {
+  CreateNoticeBody,
+  ErrorMessage,
+  HealthStatus,
+  Notice,
+  UpdateNoticeBody,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
-import type { ErrorType } from "../custom-fetch";
+import type { ErrorType, BodyType } from "../custom-fetch";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -99,3 +108,252 @@ export function useHealthCheck<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * Returns all notices ordered by postedAt descending. Requires a valid auth token.
+ * @summary List notices
+ */
+export const getListNoticesUrl = () => {
+  return `/api/notices`;
+};
+
+export const listNotices = async (options?: RequestInit): Promise<Notice[]> => {
+  return customFetch<Notice[]>(getListNoticesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListNoticesQueryKey = () => {
+  return [`/api/notices`] as const;
+};
+
+export const getListNoticesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listNotices>>,
+  TError = ErrorType<ErrorMessage>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listNotices>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListNoticesQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listNotices>>> = ({
+    signal,
+  }) => listNotices({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listNotices>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListNoticesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listNotices>>
+>;
+export type ListNoticesQueryError = ErrorType<ErrorMessage>;
+
+/**
+ * @summary List notices
+ */
+
+export function useListNotices<
+  TData = Awaited<ReturnType<typeof listNotices>>,
+  TError = ErrorType<ErrorMessage>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listNotices>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListNoticesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Creates a new notice. Requires admin or teacher role.
+ * @summary Create a notice
+ */
+export const getCreateNoticeUrl = () => {
+  return `/api/notices`;
+};
+
+export const createNotice = async (
+  createNoticeBody: CreateNoticeBody,
+  options?: RequestInit,
+): Promise<Notice> => {
+  return customFetch<Notice>(getCreateNoticeUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createNoticeBody),
+  });
+};
+
+export const getCreateNoticeMutationOptions = <
+  TError = ErrorType<ErrorMessage>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createNotice>>,
+    TError,
+    { data: BodyType<CreateNoticeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createNotice>>,
+  TError,
+  { data: BodyType<CreateNoticeBody> },
+  TContext
+> => {
+  const mutationKey = ["createNotice"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createNotice>>,
+    { data: BodyType<CreateNoticeBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createNotice(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateNoticeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createNotice>>
+>;
+export type CreateNoticeMutationBody = BodyType<CreateNoticeBody>;
+export type CreateNoticeMutationError = ErrorType<ErrorMessage>;
+
+/**
+ * @summary Create a notice
+ */
+export const useCreateNotice = <
+  TError = ErrorType<ErrorMessage>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createNotice>>,
+    TError,
+    { data: BodyType<CreateNoticeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createNotice>>,
+  TError,
+  { data: BodyType<CreateNoticeBody> },
+  TContext
+> => {
+  return useMutation(getCreateNoticeMutationOptions(options));
+};
+
+/**
+ * Partially updates a notice. Requires admin or teacher role.
+ * @summary Update a notice
+ */
+export const getUpdateNoticeUrl = (id: string) => {
+  return `/api/notices/${id}`;
+};
+
+export const updateNotice = async (
+  id: string,
+  updateNoticeBody: UpdateNoticeBody,
+  options?: RequestInit,
+): Promise<Notice> => {
+  return customFetch<Notice>(getUpdateNoticeUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateNoticeBody),
+  });
+};
+
+export const getUpdateNoticeMutationOptions = <
+  TError = ErrorType<ErrorMessage>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateNotice>>,
+    TError,
+    { id: string; data: BodyType<UpdateNoticeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateNotice>>,
+  TError,
+  { id: string; data: BodyType<UpdateNoticeBody> },
+  TContext
+> => {
+  const mutationKey = ["updateNotice"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateNotice>>,
+    { id: string; data: BodyType<UpdateNoticeBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateNotice(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateNoticeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateNotice>>
+>;
+export type UpdateNoticeMutationBody = BodyType<UpdateNoticeBody>;
+export type UpdateNoticeMutationError = ErrorType<ErrorMessage>;
+
+/**
+ * @summary Update a notice
+ */
+export const useUpdateNotice = <
+  TError = ErrorType<ErrorMessage>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateNotice>>,
+    TError,
+    { id: string; data: BodyType<UpdateNoticeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateNotice>>,
+  TError,
+  { id: string; data: BodyType<UpdateNoticeBody> },
+  TContext
+> => {
+  return useMutation(getUpdateNoticeMutationOptions(options));
+};

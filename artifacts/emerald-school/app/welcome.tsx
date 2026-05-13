@@ -5,6 +5,8 @@ import { Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
 import { useData } from "@/context/DataContext";
+import { db } from "@/lib/firebase";
+import { doc, setDoc } from "firebase/firestore";
 
 const FEATURES = [
   { icon: "bell", title: "Stay Informed", desc: "View school notices, events, and urgent updates instantly." },
@@ -18,6 +20,9 @@ export default function WelcomePage() {
   const insets = useSafeAreaInsets();
 
   const handleGetStarted = async () => {
+    if (user?.uid) {
+      await setDoc(doc(db, "users", user.uid), { hasSeenWelcome: true }, { merge: true });
+    }
     if (user?.email) await markParentFirstLogin(user.email);
     router.replace("/(tabs)");
   };

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "799787181926",
+    "project_id": "emerald-app-da985",
+    "storage_bucket": "emerald-app-da985.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:799787181926:android:58fd9eba978949d4144aa7",
+        "android_client_info": {
+          "package_name": "com.emerald.internationalschool"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBGieeVQC14hnq03k4JqQ_b34UoAwwEtnA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

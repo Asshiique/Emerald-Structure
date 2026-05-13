@@ -6,4 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./createNoticeBody";
+export * from "./errorMessage";
 export * from "./healthStatus";
+export * from "./notice";
+export * from "./updateNoticeBody";

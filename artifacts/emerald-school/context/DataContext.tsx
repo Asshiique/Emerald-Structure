@@ -13,6 +13,7 @@ import {
 import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { db } from "@/lib/firebase";
 import { createFirebaseAccount } from "@/lib/firebaseBootstrap";
+import { getCourseFee } from "@/lib/feeUtils";
 import { useAuth } from "./AuthContext";
 
 export const PROTECTED_ADMIN_EMAILS = new Set([
@@ -52,6 +53,62 @@ export interface Student {
   prevSchool: string;
   profilePhoto?: string;
   parentUid?: string;
+}
+
+export interface OtherFeeItem {
+  id: string;
+  label: string;
+  amount: number;
+}
+
+export interface PaymentEntry {
+  id: string;
+  amount: number;
+  date: string;
+  note: string;
+  recordedBy: string;
+}
+
+export interface FeeRecord {
+  id: string;          // = studentId
+  studentId: string;
+  studentName: string;
+  classSection: string;
+  parentEmail: string;
+  parentName: string;
+  courseFee: number;
+  busFee: number;
+  otherFees: OtherFeeItem[];
+  totalFee: number;
+  paidAmount: number;
+  pendingAmount: number;
+  payments: PaymentEntry[];
+  lastUpdated: string;
+}
+
+function makeFeeRecord(student: Student): FeeRecord {
+  const courseFee = getCourseFee(student.classSection);
+  return {
+    id: student.id,
+    studentId: student.id,
+    studentName: student.name,
+    classSection: student.classSection,
+    parentEmail: student.parentEmail,
+    parentName: student.parentName,
+    courseFee,
+    busFee: 0,
+    otherFees: [],
+    totalFee: courseFee,
+    paidAmount: 0,
+    pendingAmount: courseFee,
+    payments: [],
+    lastUpdated: new Date().toISOString(),
+  };
+}
+
+function recomputeTotals(rec: Partial<FeeRecord>): Pick<FeeRecord, "totalFee" | "pendingAmount"> {
+  const total = (rec.courseFee ?? 0) + (rec.busFee ?? 0) + (rec.otherFees ?? []).reduce((s, f) => s + f.amount, 0);
+  return { totalFee: total, pendingAmount: total - (rec.paidAmount ?? 0) };
 }
 
 export interface AttendanceRecord {
@@ -121,11 +178,16 @@ export interface AppNotice {
   title: string;
   body: string;
   category: "Urgent" | "Academic" | "Events" | "Fees" | "Sports" | "General";
+  /** Display-only time string derived from postedAt — not stored in DB */
   time: string;
   postedAt: string;
   isRead: boolean;
   targetRole: string;
 }
+
+// NOTE: AppNotice is kept for backward-compat with any remaining DataContext
+// consumers. New code should use the Notice type from @workspace/api-client-react
+// via hooks/useNotices.ts instead.
 
 export interface GalleryItem {
   id: string;
@@ -146,8 +208,9 @@ export interface AppData {
   settings: AppSettings;
   firstLoginParents: string[];
   timetable: TimetableDay[];
-  notices: AppNotice[];
   gallery: GalleryItem[];
+  fees: FeeRecord[];
+  // notices intentionally removed — now managed by React Query via /api/notices
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -168,9 +231,9 @@ const INITIAL_DATA: AppData = {
   attendance: [],
   homework: [],
   evaluations: [],
-  notices: [],
   gallery: [],
   timetable: [],
+  fees: [],
 };
 
 const READ_NOTICES_KEY = "@emerald_read_notice_ids";
@@ -192,11 +255,17 @@ interface DataContextType {
   updateEvaluation: (id: string, updates: Partial<Evaluation>) => Promise<void>;
   updateSettings: (s: Partial<AppSettings>) => Promise<void>;
   updateTimetable: (day: string, slots: TimetableSlot[]) => Promise<void>;
-  addNotice: (n: Omit<AppNotice, "id" | "isRead">) => Promise<void>;
+  /** @deprecated Use useMarkNoticeReadLocally() from hooks/useNotices.ts instead */
   markNoticeRead: (id: string) => Promise<void>;
   markParentFirstLogin: (email: string) => Promise<void>;
   addGalleryPhoto: (item: Omit<GalleryItem, "id" | "uploadedAt">) => Promise<void>;
   removeGalleryPhoto: (id: string) => Promise<void>;
+  // ── Fee management ──────────────────────────────────────────────────────────
+  initStudentFee: (student: Student) => Promise<void>;
+  recordFeePayment: (studentId: string, amount: number, note: string, recordedBy: string) => Promise<void>;
+  setStudentBusFee: (studentId: string, amount: number) => Promise<void>;
+  addStudentOtherFee: (studentId: string, label: string, amount: number) => Promise<void>;
+  removeStudentOtherFee: (studentId: string, feeItemId: string) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | null>(null);
@@ -207,6 +276,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const { user, isLoading: authLoading } = useAuth();
   const [data, setData] = useState<AppData>(INITIAL_DATA);
   const [isLoading, setIsLoading] = useState(true);
+
+  // NOTE: Read-notice IDs are now persisted by hooks/useNotices.ts.
+  // This ref is kept so markNoticeRead below remains functional for any
+  // remaining callers; the canonical source of truth is AsyncStorage.
   const readIds = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -274,22 +347,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
     unsubs.push(
       onSnapshot(
-        query(collection(db, "notices"), orderBy("postedAt", "desc")),
-        (snap) => {
-          setData((prev) => ({
-            ...prev,
-            notices: snap.docs.map((d) => ({
-              ...d.data(),
-              id: d.id,
-              isRead: readIds.current.has(d.id) || (d.data().isRead ?? false),
-            } as AppNotice)),
-          }));
-        }
-      )
-    );
-
-    unsubs.push(
-      onSnapshot(
         query(collection(db, "homework"), orderBy("postedAt", "desc")),
         (snap) => {
           setData((prev) => ({
@@ -299,6 +356,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         }
       )
     );
+
+    // NOTE: Notices Firestore listener intentionally removed.
+    // Notices are now fetched via GET /api/notices using React Query.
+    // See hooks/useNotices.ts for the new data source.
 
     unsubs.push(
       onSnapshot(collection(db, "attendance"), (snap) => {
@@ -326,6 +387,15 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         setData((prev) => ({
           ...prev,
           evaluations: snap.docs.map((d) => ({ ...d.data(), id: d.id } as Evaluation)),
+        }));
+      })
+    );
+
+    unsubs.push(
+      onSnapshot(collection(db, "fees"), (snap) => {
+        setData((prev) => ({
+          ...prev,
+          fees: snap.docs.map((d) => ({ ...d.data(), id: d.id } as FeeRecord)),
         }));
       })
     );
@@ -384,6 +454,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     }
     const student: Student = { ...s, id, ...(parentUid ? { parentUid } : {}) };
     await setDoc(doc(db, "students", id), student);
+    // Auto-create fee record for the student
+    await setDoc(doc(db, "fees", id), makeFeeRecord(student));
     return student;
   };
 
@@ -431,23 +503,65 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     await updateDoc(doc(db, "settings", "main"), s as Record<string, unknown>);
   };
 
+  // ── Fee management ────────────────────────────────────────────────────────
+  const initStudentFee = async (student: Student) => {
+    const existing = data.fees.find((f) => f.studentId === student.id);
+    if (existing) return;
+    await setDoc(doc(db, "fees", student.id), makeFeeRecord(student));
+  };
+
+  const recordFeePayment = async (studentId: string, amount: number, note: string, recordedBy: string) => {
+    const rec = data.fees.find((f) => f.studentId === studentId);
+    if (!rec) return;
+    const entry: PaymentEntry = { id: `pay_${genId()}`, amount, date: new Date().toISOString().split("T")[0], note, recordedBy };
+    const paidAmount = rec.paidAmount + amount;
+    const totals = recomputeTotals({ ...rec, paidAmount });
+    await updateDoc(doc(db, "fees", studentId), {
+      payments: arrayUnion(entry),
+      paidAmount,
+      ...totals,
+      lastUpdated: new Date().toISOString(),
+    });
+  };
+
+  const setStudentBusFee = async (studentId: string, amount: number) => {
+    const rec = data.fees.find((f) => f.studentId === studentId);
+    if (!rec) return;
+    const totals = recomputeTotals({ ...rec, busFee: amount });
+    await updateDoc(doc(db, "fees", studentId), { busFee: amount, ...totals, lastUpdated: new Date().toISOString() });
+  };
+
+  const addStudentOtherFee = async (studentId: string, label: string, amount: number) => {
+    const rec = data.fees.find((f) => f.studentId === studentId);
+    if (!rec) return;
+    const item: OtherFeeItem = { id: genId(), label, amount };
+    const otherFees = [...rec.otherFees, item];
+    const totals = recomputeTotals({ ...rec, otherFees });
+    await updateDoc(doc(db, "fees", studentId), { otherFees, ...totals, lastUpdated: new Date().toISOString() });
+  };
+
+  const removeStudentOtherFee = async (studentId: string, feeItemId: string) => {
+    const rec = data.fees.find((f) => f.studentId === studentId);
+    if (!rec) return;
+    const otherFees = rec.otherFees.filter((f) => f.id !== feeItemId);
+    const totals = recomputeTotals({ ...rec, otherFees });
+    await updateDoc(doc(db, "fees", studentId), { otherFees, ...totals, lastUpdated: new Date().toISOString() });
+  };
+
   const updateTimetable = async (day: string, slots: TimetableSlot[]) => {
     const updated = data.timetable.map((d) => (d.day === day ? { ...d, slots } : d));
     await updateDoc(doc(db, "settings", "main"), { timetable: updated });
   };
 
-  const addNotice = async (n: Omit<AppNotice, "id" | "isRead">) => {
-    const id = `notice_${genId()}`;
-    await setDoc(doc(db, "notices", id), { ...n, id, isRead: false });
-  };
-
+  /**
+   * @deprecated Use useMarkNoticeReadLocally() from hooks/useNotices.ts instead.
+   * Kept here to avoid breaking any callers that haven't been migrated yet.
+   */
   const markNoticeRead = async (id: string) => {
     readIds.current.add(id);
     AsyncStorage.setItem(READ_NOTICES_KEY, JSON.stringify([...readIds.current]));
-    setData((prev) => ({
-      ...prev,
-      notices: prev.notices.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
-    }));
+    // Note: no longer updates data.notices since notices were removed from AppData.
+    // The React Query cache update is handled by useMarkNoticeReadLocally().
   };
 
   const markParentFirstLogin = async (email: string) => {
@@ -477,8 +591,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         markAttendance, getAttendanceForDate,
         addHomework, addEvaluation, updateEvaluation,
         updateSettings, updateTimetable,
-        addNotice, markNoticeRead, markParentFirstLogin,
+        markNoticeRead, markParentFirstLogin,
         addGalleryPhoto, removeGalleryPhoto,
+        initStudentFee, recordFeePayment,
+        setStudentBusFee, addStudentOtherFee, removeStudentOtherFee,
       }}
     >
       {children}

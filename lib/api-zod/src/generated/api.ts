@@ -14,3 +14,62 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * Returns all notices ordered by postedAt descending. Requires a valid auth token.
+ * @summary List notices
+ */
+export const ListNoticesResponseItem = zod.object({
+  id: zod.string(),
+  title: zod.string(),
+  body: zod.string(),
+  category: zod.string(),
+  targetRole: zod.string(),
+  postedAt: zod.coerce.date(),
+  isRead: zod.boolean(),
+  createdAt: zod.coerce.date(),
+});
+export const ListNoticesResponse = zod.array(ListNoticesResponseItem);
+
+/**
+ * Creates a new notice. Requires admin or teacher role.
+ * @summary Create a notice
+ */
+
+export const createNoticeBodyTargetRoleDefault = `all`;
+
+export const CreateNoticeBody = zod.object({
+  title: zod.string().min(1),
+  body: zod.string().min(1),
+  category: zod.string().min(1),
+  targetRole: zod.string().default(createNoticeBodyTargetRoleDefault),
+  postedAt: zod.coerce.date().optional(),
+});
+
+/**
+ * Partially updates a notice. Requires admin or teacher role.
+ * @summary Update a notice
+ */
+export const UpdateNoticeParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const UpdateNoticeBody = zod.object({
+  title: zod.string().min(1).optional(),
+  body: zod.string().min(1).optional(),
+  category: zod.string().min(1).optional(),
+  targetRole: zod.string().optional(),
+  isRead: zod.boolean().optional(),
+  postedAt: zod.coerce.date().optional(),
+});
+
+export const UpdateNoticeResponse = zod.object({
+  id: zod.string(),
+  title: zod.string(),
+  body: zod.string(),
+  category: zod.string(),
+  targetRole: zod.string(),
+  postedAt: zod.coerce.date(),
+  isRead: zod.boolean(),
+  createdAt: zod.coerce.date(),
+});

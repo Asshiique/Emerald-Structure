@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: notices
+    description: Notice board operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,147 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /notices:
+    get:
+      operationId: listNotices
+      tags: [notices]
+      summary: List notices
+      description: Returns all notices ordered by postedAt descending. Requires a valid auth token.
+      responses:
+        "200":
+          description: Array of notices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notice"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+    post:
+      operationId: createNotice
+      tags: [notices]
+      summary: Create a notice
+      description: Creates a new notice. Requires admin or teacher role.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateNoticeBody"
+      responses:
+        "201":
+          description: Notice created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notice"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+
+  /notices/{id}:
+    patch:
+      operationId: updateNotice
+      tags: [notices]
+      summary: Update a notice
+      description: Partially updates a notice. Requires admin or teacher role.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateNoticeBody"
+      responses:
+        "200":
+          description: Updated notice
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notice"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+        "404":
+          description: Notice not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+    delete:
+      operationId: deleteNotice
+      tags: [notices]
+      summary: Delete a notice
+      description: Permanently deletes a notice. Requires admin role.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Notice deleted successfully (no content)
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+        "404":
+          description: Notice not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +177,84 @@ components:
       required:
         - status
 
+    ErrorMessage:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+
+    Notice:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+        category:
+          type: string
+        targetRole:
+          type: string
+        postedAt:
+          type: string
+          format: date-time
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - body
+        - category
+        - targetRole
+        - postedAt
+        - isRead
+        - createdAt
+
+    CreateNoticeBody:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+        body:
+          type: string
+          minLength: 1
+        category:
+          type: string
+          minLength: 1
+        targetRole:
+          type: string
+          default: "all"
+        postedAt:
+          type: string
+          format: date-time
+      required:
+        - title
+        - body
+        - category
+
+    UpdateNoticeBody:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+        body:
+          type: string
+          minLength: 1
+        category:
+          type: string
+          minLength: 1
+        targetRole:
+          type: string
+        isRead:
+          type: boolean
+        postedAt:
+          type: string
+          format: date-time

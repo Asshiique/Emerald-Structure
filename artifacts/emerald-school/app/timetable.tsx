@@ -54,7 +54,10 @@ export default function TimetablePage() {
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <Text style={styles.headerTitle}>Timetable</Text>
-            <Text style={styles.headerSub}>Class X-B · 2024–25</Text>
+            <Text style={styles.headerSub}>
+              {user?.classSection ? `Class ${user.classSection}` : "School Timetable"}{" "}
+              {data.settings.academicYear ? `· ${data.settings.academicYear}` : ""}
+            </Text>
           </View>
           {isAdmin ? (
             <TouchableOpacity style={styles.saveHeaderBtn} onPress={handleSave} disabled={saving}>

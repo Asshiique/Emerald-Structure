@@ -42,7 +42,7 @@ export default function AdminPanelPage() {
     { icon: "user-plus", title: "Manage Students", subtitle: `${totalStudents} students`, color: "#185FA5", onPress: () => router.push("/admin/students") },
     { icon: "bell", title: "Post Notice", subtitle: "School-wide announcement", color: "#BA7517", onPress: () => router.push("/admin/post-notice") },
     { icon: "book", title: "Post Homework", subtitle: "For any class", color: "#3B6D11", onPress: () => router.push("/admin/post-homework") },
-    { icon: "credit-card", title: "Fee Management", subtitle: "View fee records", color: "#7B3F9E", onPress: () => router.push("/(tabs)/fees") },
+    { icon: "credit-card", title: "Fee Management", subtitle: "View fee records", color: "#7B3F9E", onPress: () => router.push("/admin/fees") },
     { icon: "bar-chart-2", title: "Teacher Performance", subtitle: `${data.evaluations.length} evaluations`, color: "#1A7A6E", onPress: () => router.push("/admin/performance") },
     { icon: "settings", title: "App Settings", subtitle: "School info & config", color: "#555550", onPress: () => router.push("/admin/settings") },
   ];

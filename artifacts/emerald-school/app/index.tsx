@@ -15,6 +15,8 @@ export default function IndexPage() {
   if (!user) return <Redirect href="/login" />;
   if (user.role === "admin") return <Redirect href="/admin" />;
   if (user.role === "teacher") return <Redirect href="/teacher" />;
-  if (!data.firstLoginParents.includes(user.email)) return <Redirect href="/welcome" />;
+  if ((user.role === "parent" || user.role === "student") && !user.hasSeenWelcome) {
+    return <Redirect href="/welcome" />;
+  }
   return <Redirect href="/(tabs)" />;
 }

@@ -101,8 +101,18 @@ export default function ProfilePage() {
       <View style={styles.menuCard}>
         <MenuItem icon="phone" label="Call School Office" color="#C0282A" onPress={() => Linking.openURL(`tel:${SCHOOL_PHONE}`)} showBorder />
         <MenuItem icon="phone" label="Office Number" value={data.settings.phone} showBorder />
-        <MenuItem icon="mail" label="Email" value={data.settings.email} showBorder={false} />
+        <MenuItem icon="mail" label="Email" value={data.settings.email} showBorder />
+        <MenuItem icon="message-square" label="Complaints & Suggestions" onPress={() => router.push("/feedback")} showBorder={false} />
       </View>
+
+      {user?.role === "admin" && (
+        <>
+          <Text style={styles.sectionLabel}>ADMIN</Text>
+          <View style={styles.menuCard}>
+            <MenuItem icon="inbox" label="Feedback Inbox" onPress={() => router.push("/admin/feedback")} showBorder={false} />
+          </View>
+        </>
+      )}
 
       <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
         <Feather name="log-out" size={18} color="#C0282A" />

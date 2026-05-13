@@ -113,7 +113,7 @@ export default function AddStaffPage() {
           email: form.email.trim().toLowerCase(), role: form.role as any,
           department: form.department.trim(), classSection: form.classSection,
           joinDate: form.joinDate, employeeId: form.employeeId.trim(),
-          profilePhoto,
+          ...(profilePhoto ? { profilePhoto } : {}),
         },
         form.password
       );
@@ -123,9 +123,10 @@ export default function AddStaffPage() {
         [{ text: "OK", onPress: () => router.back() }]
       );
     } catch (e: any) {
+      console.error("ADD STAFF ERROR:", e);
       const msg = e?.code === "auth/email-already-in-use"
         ? "That email already has an account. Use a different email address."
-        : "Failed to add staff. Please try again.";
+        : `Failed to add staff: ${e?.message || "Unknown error"}`;
       Alert.alert("Error", msg);
     } finally {
       setLoading(false);

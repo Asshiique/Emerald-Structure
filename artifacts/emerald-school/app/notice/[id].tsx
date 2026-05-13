@@ -1,9 +1,17 @@
 import { Feather } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect } from "react";
-import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useData } from "@/context/DataContext";
+import { formatNoticeTime, useMarkNoticeReadLocally, useNotices } from "@/hooks/useNotices";
 
 const CATEGORY_STYLES: Record<string, { bg: string; color: string }> = {
   Urgent: { bg: "#F8EBEB", color: "#C0282A" },
@@ -18,9 +26,10 @@ export default function NoticeDetailPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
-  const { data, markNoticeRead } = useData();
+  const { notices, isLoading } = useNotices();
+  const markNoticeRead = useMarkNoticeReadLocally();
 
-  const notice = data.notices.find((n) => n.id === id);
+  const notice = notices.find((n) => n.id === id);
 
   useEffect(() => {
     if (notice && !notice.isRead) {
@@ -31,6 +40,14 @@ export default function NoticeDetailPage() {
   const catStyle = notice
     ? (CATEGORY_STYLES[notice.category] ?? CATEGORY_STYLES["General"]!)
     : CATEGORY_STYLES["General"]!;
+
+  if (isLoading) {
+    return (
+      <View style={styles.notFound}>
+        <ActivityIndicator color="#C0282A" />
+      </View>
+    );
+  }
 
   if (!notice) {
     return (
@@ -63,7 +80,7 @@ export default function NoticeDetailPage() {
             <Text style={[styles.badgeText, { color: catStyle.color }]}>{notice.category}</Text>
           </View>
           <Text style={styles.title}>{notice.title}</Text>
-          <Text style={styles.time}>{notice.time}</Text>
+          <Text style={styles.time}>{formatNoticeTime(notice.postedAt)}</Text>
           <View style={styles.divider} />
           <Text style={styles.body}>{notice.body}</Text>
           <View style={styles.divider} />

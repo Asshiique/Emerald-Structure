@@ -8,3 +8,41 @@
 export interface HealthStatus {
   status: string;
 }
+
+export interface ErrorMessage {
+  message: string;
+}
+
+export interface Notice {
+  id: string;
+  title: string;
+  body: string;
+  category: string;
+  targetRole: string;
+  postedAt: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface CreateNoticeBody {
+  /** @minLength 1 */
+  title: string;
+  /** @minLength 1 */
+  body: string;
+  /** @minLength 1 */
+  category: string;
+  targetRole?: string;
+  postedAt?: string;
+}
+
+export interface UpdateNoticeBody {
+  /** @minLength 1 */
+  title?: string;
+  /** @minLength 1 */
+  body?: string;
+  /** @minLength 1 */
+  category?: string;
+  targetRole?: string;
+  isRead?: boolean;
+  postedAt?: string;
+}

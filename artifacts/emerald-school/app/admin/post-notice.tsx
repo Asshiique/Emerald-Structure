@@ -1,58 +1,64 @@
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useAuth } from "@/context/AuthContext";
-import { AppNotice, useData } from "@/context/DataContext";
 import { useRoleGuard } from "@/hooks/useRoleGuard";
+import { usePostNotice } from "@/hooks/useNotices";
 
-const CATEGORIES: AppNotice["category"][] = ["Urgent", "Academic", "Events", "Fees", "Sports", "General"];
+const CATEGORIES = ["Urgent", "Academic", "Events", "Fees", "Sports", "General"] as const;
+type Category = (typeof CATEGORIES)[number];
+
 const CATEGORY_COLORS: Record<string, string> = {
   Urgent: "#C0282A", Academic: "#185FA5", Events: "#BA7517", Fees: "#7B3F9E", Sports: "#3B6D11", General: "#555550",
 };
 
-function formatTime(date: Date): string {
-  const h = date.getHours(), m = date.getMinutes().toString().padStart(2, "0");
-  const ampm = h >= 12 ? "PM" : "AM";
-  return `Today · ${h % 12 || 12}:${m} ${ampm}`;
-}
-
 export default function PostNoticePage() {
   useRoleGuard(["admin"]);
-  const { user } = useAuth();
-  const { addNotice } = useData();
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [category, setCategory] = useState<AppNotice["category"] | "">("");
-  const [loading, setLoading] = useState(false);
+  const [category, setCategory] = useState<Category | "">("");
+
+  const { mutateAsync: postNotice, isPending } = usePostNotice();
 
   const handlePost = async () => {
     if (!title.trim() || !body.trim() || !category) {
       Alert.alert("Missing Fields", "Please fill in title, body, and select a category.");
       return;
     }
-    setLoading(true);
     try {
-      const now = new Date();
-      await addNotice({
-        title: title.trim(),
-        body: body.trim(),
-        category: category as AppNotice["category"],
-        time: formatTime(now),
-        postedAt: now.toISOString(),
-        targetRole: "all",
+      await postNotice({
+        data: {
+          title: title.trim(),
+          body: body.trim(),
+          category,
+          targetRole: "all",
+          postedAt: new Date().toISOString(),
+        },
       });
-      Alert.alert("Notice Posted", "Your notice has been published to all students and parents.", [
-        { text: "Post Another", onPress: () => { setTitle(""); setBody(""); setCategory(""); } },
-        { text: "Done", onPress: () => router.back() },
-      ]);
+      Alert.alert(
+        "Notice Posted",
+        "Your notice has been published to all students and parents.",
+        [
+          { text: "Post Another", onPress: () => { setTitle(""); setBody(""); setCategory(""); } },
+          { text: "Done", onPress: () => router.back() },
+        ]
+      );
     } catch {
       Alert.alert("Error", "Failed to post notice. Please try again.");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -114,8 +120,8 @@ export default function PostNoticePage() {
               <Text style={styles.infoText}>This notice will appear for all parents and students immediately.</Text>
             </View>
 
-            <TouchableOpacity style={styles.btn} onPress={handlePost} disabled={loading} activeOpacity={0.85}>
-              {loading ? <ActivityIndicator color="#FFFFFF" /> : (
+            <TouchableOpacity style={styles.btn} onPress={handlePost} disabled={isPending} activeOpacity={0.85}>
+              {isPending ? <ActivityIndicator color="#FFFFFF" /> : (
                 <>
                   <Feather name="send" size={16} color="#FFFFFF" />
                   <Text style={styles.btnText}>Post Notice</Text>

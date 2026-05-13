@@ -1,38 +1,128 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React, { useState } from "react";
-import { ActivityIndicator, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withDelay,
+  withTiming,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
 
 const LOGO = require("../assets/images/logo.jpeg");
 
-const DEMO_LOGINS = [
-  { label: "Admin Demo", subtitle: "Full admin access", email: "ashiquemuhammed057@gmail.com", password: "Emeraldismkd@1234" },
-  { label: "Teacher Demo", subtitle: "teacher@emerald.edu", email: "teacher@emerald.edu", password: "demo123" },
-  { label: "Parent Demo", subtitle: "parent@emerald.edu", email: "parent@emerald.edu", password: "demo123" },
-];
-
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, requestPasswordReset, lastAuthError } = useAuth();
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
   const isWeb = Platform.OS === "web";
+
+  // ── Entrance animations ──────────────────────────────────────────────────
+  const logoScale = useSharedValue(0.7);
+  const logoOpacity = useSharedValue(0);
+  const formTranslateY = useSharedValue(60);
+  const formOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    // Logo bounces in
+    logoScale.value = withSpring(1, { damping: 12, stiffness: 150 });
+    logoOpacity.value = withTiming(1, { duration: 300 });
+    // Form panel slides up 100ms later
+    formTranslateY.value = withDelay(100, withSpring(0, { damping: 20, stiffness: 160 }));
+    formOpacity.value = withDelay(100, withTiming(1, { duration: 280 }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const logoAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: logoScale.value }],
+    opacity: logoOpacity.value,
+  }));
+
+  const formAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: formTranslateY.value }],
+    opacity: formOpacity.value,
+  }));
+
+
+  const mapAuthError = (code?: string) => {
+    switch (code) {
+      case "auth/invalid-credential":
+      case "auth/invalid-login-credentials":
+        return "Invalid email or password.";
+      case "auth/user-not-found":
+        return "No account found for this email.";
+      case "auth/wrong-password":
+        return "Wrong password.";
+      case "auth/too-many-requests":
+        return "Too many attempts. Try again later or reset your password.";
+      case "auth/network-request-failed":
+        return "Network error. Please check your internet connection.";
+      case "auth/operation-not-allowed":
+        return "Email/password sign-in is disabled in Firebase for this app.";
+      case "auth/invalid-email":
+        return "Please enter a valid email address.";
+      case "profile/missing":
+        return "Account exists, but profile data is missing. Contact admin support.";
+      default:
+        return "";
+    }
+  };
 
   const handleLogin = async (nextEmail = email, nextPassword = password) => {
     setError("");
+    setInfo("");
     if (!nextEmail.trim()) { setError("Please enter your email address."); return; }
     setLoading(true);
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const success = await login(nextEmail, nextPassword);
+    const result = await login(nextEmail, nextPassword);
     setLoading(false);
-    if (success) router.replace("/");
-    else setError("Invalid credentials. Please check your email and password.");
+    if (result.success) {
+      router.replace("/");
+    } else {
+      // Read the error code directly from the result — not from lastAuthError state
+      // which is async and would be stale on this render.
+      const msg = mapAuthError(result.code) || "Sign-in failed. Please try again.";
+      const detail = result.code ? ` (${result.code})` : "";
+      setError(`${msg}${detail}`);
+    }
+  };
+
+  const handleReset = async () => {
+    setError("");
+    setInfo("");
+    if (!email.trim()) {
+      setError("Enter your email first, then tap Reset password.");
+      return;
+    }
+    setLoading(true);
+    const ok = await requestPasswordReset(email);
+    setLoading(false);
+    if (ok) setInfo("Password reset email sent. Check your inbox (and spam).");
+    else {
+      const msg = mapAuthError(lastAuthError?.code) || "Unable to send reset email.";
+      const detail = lastAuthError?.code ? ` (${lastAuthError.code})` : "";
+      setError(`${msg}${detail}`);
+    }
   };
 
   return (
@@ -41,18 +131,19 @@ export default function LoginPage() {
         <View style={[styles.topSection, { paddingTop: isWeb ? 80 : insets.top + 40 }]}>
           <View style={styles.circle1} />
           <View style={styles.circle2} />
-          <View style={styles.logoContainer}>
+          <Animated.View style={[styles.logoContainer, logoAnimStyle]}>
             <View style={styles.logoCard}>
               <Image source={LOGO} style={styles.logoImage} resizeMode="cover" />
             </View>
-          </View>
+          </Animated.View>
         </View>
 
-        <View style={[styles.bottomSection, { paddingBottom: isWeb ? 34 : insets.bottom + 24 }]}>
+        <Animated.View style={[styles.bottomSection, { paddingBottom: isWeb ? 34 : insets.bottom + 24 }, formAnimStyle]}>
           <Text style={styles.welcomeTitle}>Welcome back</Text>
           <Text style={styles.welcomeSub}>Sign in to continue</Text>
 
           {error ? <View style={styles.errorBox}><Text style={styles.errorText}>{error}</Text></View> : null}
+          {info ? <View style={styles.infoBox}><Text style={styles.infoText}>{info}</Text></View> : null}
 
           <View style={styles.inputWrapper}>
             <Feather name="mail" size={16} color="#888882" style={styles.inputIcon} />
@@ -71,19 +162,10 @@ export default function LoginPage() {
             {loading ? <ActivityIndicator color="#FFFFFF" size="small" /> : <Text style={styles.signInText}>Sign In</Text>}
           </TouchableOpacity>
 
-          <View style={styles.demoBox}>
-            <Text style={styles.demoTitle}>Demo Sign In</Text>
-            <Text style={styles.demoText}>Try these accounts quickly:</Text>
-            <View style={styles.demoGrid}>
-              {DEMO_LOGINS.map((item) => (
-                <TouchableOpacity key={item.label} style={styles.demoBtn} onPress={() => handleLogin(item.email, item.password)} activeOpacity={0.8}>
-                  <Text style={styles.demoBtnTitle}>{item.label}</Text>
-                  <Text style={styles.demoBtnText}>{item.subtitle}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        </View>
+          <TouchableOpacity style={styles.resetBtn} onPress={handleReset} activeOpacity={0.85} disabled={loading}>
+            <Text style={styles.resetText}>Reset password</Text>
+          </TouchableOpacity>
+        </Animated.View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -101,6 +183,8 @@ const styles = StyleSheet.create({
   welcomeSub: { fontSize: 13, color: "#888882", marginBottom: 24 },
   errorBox: { backgroundColor: "#F8EBEB", borderRadius: 10, padding: 12, marginBottom: 16 },
   errorText: { fontSize: 13, color: "#C0282A" },
+  infoBox: { backgroundColor: "#ECF7EF", borderRadius: 10, padding: 12, marginBottom: 16 },
+  infoText: { fontSize: 13, color: "#1E6B3A" },
   inputWrapper: { flexDirection: "row", alignItems: "center", backgroundColor: "#F5F4F2", borderRadius: 10, borderWidth: 0.5, borderColor: "rgba(0,0,0,0.12)", paddingHorizontal: 14, height: 50 },
   inputIcon: { marginRight: 10 },
   input: { flex: 1, fontSize: 15, color: "#1A1A1A" },
@@ -108,11 +192,6 @@ const styles = StyleSheet.create({
   signInBtn: { height: 50, backgroundColor: "#C0282A", borderRadius: 12, alignItems: "center", justifyContent: "center", marginTop: 16 },
   signInBtnDisabled: { opacity: 0.7 },
   signInText: { fontSize: 16, fontWeight: "600", color: "#FFFFFF" },
-  demoBox: { backgroundColor: "#FFF8EC", borderRadius: 14, padding: 16, marginTop: 20 },
-  demoTitle: { fontSize: 13, fontWeight: "700", color: "#8B6010", marginBottom: 4 },
-  demoText: { fontSize: 12, color: "#8B6010", marginBottom: 10 },
-  demoGrid: { gap: 8 },
-  demoBtn: { backgroundColor: "#FFFFFF", borderRadius: 10, padding: 12, borderWidth: 1, borderColor: "rgba(200,151,42,0.25)" },
-  demoBtnTitle: { fontSize: 13, fontWeight: "700", color: "#1A1A1A" },
-  demoBtnText: { fontSize: 11, color: "#888882", marginTop: 2 },
+  resetBtn: { alignSelf: "center", paddingVertical: 14, paddingHorizontal: 14, marginTop: 6 },
+  resetText: { fontSize: 13, color: "#888882", fontWeight: "600" },
 });

@@ -1,15 +1,58 @@
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React from "react";
+import React, { useMemo } from "react";
 import { Linking, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { FadeSlideIn } from "@/components/FadeSlideIn";
 import { ScheduleCard } from "@/components/ScheduleCard";
 import { StatCard } from "@/components/StatCard";
 import { useAuth } from "@/context/AuthContext";
 import { useData } from "@/context/DataContext";
-import { TODAY_SCHEDULE } from "@/data/mockData";
+import { useNotices } from "@/hooks/useNotices";
 
 const SCHOOL_PHONE = "+919400000000";
+
+/** Day index Sun=0 … Sat=6 → timetable day name */
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+/** Return the timetable slots for today from data.timetable */
+function useTodaySlots(timetable: { day: string; slots: { time: string; subject: string; teacher: string }[] }[]) {
+  return useMemo(() => {
+    const todayName = DAY_NAMES[new Date().getDay()];
+    const todayEntry = timetable.find((t) => t.day === todayName);
+    if (!todayEntry || todayEntry.slots.length === 0) return [];
+
+    // Mark the currently active slot based on current hour
+    const nowHour = new Date().getHours() + new Date().getMinutes() / 60;
+    return todayEntry.slots.map((slot, i) => {
+      // Parse "HH:MM" or "H:MM"
+      const [h = 0, m = 0] = slot.time.split(":").map(Number);
+      const slotHour = h + m / 60;
+      const nextSlot = todayEntry.slots[i + 1];
+      const nextHour = nextSlot
+        ? Number(nextSlot.time.split(":")[0]) + Number(nextSlot.time.split(":")[1] ?? 0) / 60
+        : slotHour + 1;
+      const isActive = nowHour >= slotHour && nowHour < nextHour;
+      return { ...slot, isActive };
+    });
+  }, [timetable]);
+}
+
+/** Compute attendance % for the logged-in student from Firestore attendance records */
+function useAttendanceStats(studentId: string | undefined, classSection: string | undefined, attendance: { classSection: string; records: { studentId: string; status: string }[] }[]) {
+  return useMemo(() => {
+    if (!studentId || !classSection) return { pct: "—", days: 0, total: 0 };
+    const myClassRecords = attendance.filter((a) => a.classSection === classSection);
+    let present = 0;
+    const total = myClassRecords.length;
+    for (const rec of myClassRecords) {
+      const entry = rec.records.find((r) => r.studentId === studentId);
+      if (entry?.status === "present" || entry?.status === "late") present++;
+    }
+    const pct = total > 0 ? Math.round((present / total) * 100) : null;
+    return { pct: pct !== null ? `${pct}%` : "—", days: present, total };
+  }, [studentId, classSection, attendance]);
+}
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -30,7 +73,33 @@ export default function HomePage() {
   const greeting = hour < 12 ? "Good morning," : hour < 17 ? "Good afternoon," : "Good evening,";
   const firstName = user?.name?.split(" ")[0] ?? "Student";
 
-  const latestNotice = data.notices.length > 0 ? data.notices[0] : null;
+  const { notices } = useNotices();
+  const latestNotice = notices.length > 0 ? notices[0] : null;
+
+  // Find the matching student record by admission no (stored in user.rollNo for parent accounts)
+  const studentRecord = useMemo(() => {
+    if (!user) return undefined;
+    // Try matching by admissionNo == user.rollNo, or by parentEmail == user.email
+    return (
+      data.students.find((s) => s.admissionNo === user.rollNo) ??
+      data.students.find((s) => s.parentEmail && s.parentEmail.toLowerCase() === user.email?.toLowerCase())
+    );
+  }, [user, data.students]);
+
+  const studentId = studentRecord?.id;
+  const classSection = user?.classSection ?? studentRecord?.classSection;
+
+  // Live attendance stats
+  const { pct: attendancePct } = useAttendanceStats(studentId, classSection, data.attendance);
+
+  // Pending homework count for this class
+  const pendingHomework = useMemo(() => {
+    if (!classSection) return 0;
+    return data.homework.filter((h) => h.classSection === classSection).length;
+  }, [classSection, data.homework]);
+
+  // Today's timetable from Firestore
+  const todaySlots = useTodaySlots(data.timetable);
 
   const handleCall = () => { Linking.openURL(`tel:${SCHOOL_PHONE}`); };
 
@@ -40,125 +109,131 @@ export default function HomePage() {
       contentContainerStyle={{ paddingBottom: bottomPad + 100 }}
       showsVerticalScrollIndicator={false}
     >
-      <View style={[styles.header, { paddingTop: topPad + 16 }]}>
-        <View style={styles.circle1} />
-        <View style={styles.circle2} />
-        <View style={styles.headerRow}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.schoolLabel}>EMERALD INTERNATIONAL SCHOOL</Text>
-            <Text style={styles.greeting}>
-              {greeting}{"\n"}
-              <Text style={styles.greetingName}>{firstName}</Text>
-            </Text>
-            <Text style={styles.classInfo}>
-              {user?.classSection ? `Class ${user.classSection}` : ""}
-              {user?.rollNo ? ` · Roll No. ${user.rollNo}` : ""}
-            </Text>
-          </View>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{initials}</Text>
+      {/* Header — appears first */}
+      <FadeSlideIn delay={0} from={-20}>
+        <View style={[styles.header, { paddingTop: topPad + 16 }]}>
+          <View style={styles.circle1} />
+          <View style={styles.circle2} />
+          <View style={styles.headerRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.schoolLabel}>EMERALD INTERNATIONAL SCHOOL</Text>
+              <Text style={styles.greeting}>
+                {greeting}{"\n"}
+                <Text style={styles.greetingName}>{firstName}</Text>
+              </Text>
+              <Text style={styles.classInfo}>
+                {classSection ? `Class ${classSection}` : ""}
+                {user?.rollNo ? ` · Roll No. ${user.rollNo}` : ""}
+              </Text>
+            </View>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{initials}</Text>
+            </View>
           </View>
         </View>
-      </View>
+      </FadeSlideIn>
 
+      {/* Notice banner — 80ms after header */}
       {latestNotice && (
-        <TouchableOpacity style={styles.noticeBanner} onPress={() => router.push(`/notice/${latestNotice.id}`)} activeOpacity={0.8}>
-          <View style={styles.bellIcon}>
-            <Feather name="bell" size={16} color="#C8972A" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.bannerTitle} numberOfLines={1}>{latestNotice.title}</Text>
-            <Text style={styles.bannerBody} numberOfLines={1}>{latestNotice.body}</Text>
-          </View>
-          <TouchableOpacity onPress={() => router.push("/(tabs)/notices")}>
-            <Feather name="chevron-right" size={18} color="#C8972A" />
+        <FadeSlideIn delay={80}>
+          <TouchableOpacity style={styles.noticeBanner} onPress={() => router.push(`/notice/${latestNotice.id}`)} activeOpacity={0.8}>
+            <View style={styles.bellIcon}>
+              <Feather name="bell" size={16} color="#C8972A" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.bannerTitle} numberOfLines={1}>{latestNotice.title}</Text>
+              <Text style={styles.bannerBody} numberOfLines={1}>{latestNotice.body}</Text>
+            </View>
+            <TouchableOpacity onPress={() => router.push("/(tabs)/notices")}>
+              <Feather name="chevron-right" size={18} color="#C8972A" />
+            </TouchableOpacity>
           </TouchableOpacity>
-        </TouchableOpacity>
+        </FadeSlideIn>
       )}
 
-      <TouchableOpacity style={styles.callCard} onPress={handleCall} activeOpacity={0.75}>
-        <View style={styles.callIcon}>
-          <Feather name="phone" size={18} color="#FFFFFF" />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.callTitle}>Call School Office</Text>
-          <Text style={styles.callSub}>Mannarkkad · Available 8AM–4PM</Text>
-        </View>
-        <Feather name="chevron-right" size={18} color="#C0282A" />
-      </TouchableOpacity>
+      {/* Call card — 160ms */}
+      <FadeSlideIn delay={160}>
+        <TouchableOpacity style={styles.callCard} onPress={handleCall} activeOpacity={0.75}>
+          <View style={styles.callIcon}>
+            <Feather name="phone" size={18} color="#FFFFFF" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.callTitle}>Call School Office</Text>
+            <Text style={styles.callSub}>Mannarkkad · Available 8AM–4PM</Text>
+          </View>
+          <Feather name="chevron-right" size={18} color="#C0282A" />
+        </TouchableOpacity>
+      </FadeSlideIn>
 
-      <View style={styles.statsGrid}>
-        <StatCard value="92%" label="Attendance" sublabel="This month" />
-        <StatCard value="83" label="Avg. Marks" sublabel="Last exam" />
-      </View>
-
-      <Text style={styles.sectionLabel}>TODAY'S SCHEDULE</Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scheduleScroll}
-      >
-        {TODAY_SCHEDULE.map((slot, i) => (
-          <ScheduleCard
-            key={i}
-            time={slot.time}
-            subject={slot.subject}
-            teacher={slot.teacher}
-            isActive={slot.isActive}
+      {/* Stats — 240ms */}
+      <FadeSlideIn delay={240}>
+        <View style={styles.statsGrid}>
+          <StatCard
+            value={attendancePct}
+            label="Attendance"
+            sublabel={attendancePct === "—" ? "No records yet" : "This term"}
           />
-        ))}
-      </ScrollView>
-
-      <Text style={styles.sectionLabel}>UPCOMING</Text>
-      <View style={styles.upcomingCard}>
-        <View style={styles.upcomingRow}>
-          <View style={{ flex: 1 }}>
-            <View style={styles.upcomingBadge}>
-              <Text style={styles.upcomingBadgeText}>Exam</Text>
-            </View>
-            <Text style={styles.upcomingTitle}>Unit Test — Science</Text>
-            <Text style={styles.upcomingDate}>Friday, 14 Feb · 10:00 AM</Text>
-          </View>
-          <View style={styles.dateBlock}>
-            <Text style={styles.dateNum}>14</Text>
-            <Text style={styles.dateMonth}>FEB</Text>
-          </View>
+          <StatCard
+            value={String(pendingHomework)}
+            label="Homework"
+            sublabel="Active assignments"
+          />
         </View>
-        <View style={styles.upcomingDivider} />
-        <View style={styles.upcomingRow}>
-          <View style={{ flex: 1 }}>
-            <View style={[styles.upcomingBadge, { backgroundColor: "#FFF8EC" }]}>
-              <Text style={[styles.upcomingBadgeText, { color: "#8B6010" }]}>Extra Class</Text>
-            </View>
-            <Text style={styles.upcomingTitle}>JEE Prep — Mathematics</Text>
-            <Text style={styles.upcomingDate}>Saturday, 15 Feb · 8:00 AM</Text>
-          </View>
-          <View style={[styles.dateBlock, { backgroundColor: "#FFF8EC" }]}>
-            <Text style={[styles.dateNum, { color: "#C8972A" }]}>15</Text>
-            <Text style={[styles.dateMonth, { color: "#C8972A" }]}>FEB</Text>
-          </View>
-        </View>
-      </View>
+      </FadeSlideIn>
 
-      <Text style={styles.sectionLabel}>QUICK ACTIONS</Text>
-      <View style={styles.quickActions}>
-        <TouchableOpacity style={styles.quickBtn} onPress={() => router.push("/timetable")} activeOpacity={0.7}>
-          <View style={styles.quickIcon}><Feather name="calendar" size={20} color="#C0282A" /></View>
-          <Text style={styles.quickLabel}>Timetable</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.quickBtn} onPress={() => router.push("/attendance")} activeOpacity={0.7}>
-          <View style={styles.quickIcon}><Feather name="check-square" size={20} color="#C0282A" /></View>
-          <Text style={styles.quickLabel}>Attendance</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.quickBtn} onPress={() => router.push("/(tabs)/homework")} activeOpacity={0.7}>
-          <View style={styles.quickIcon}><Feather name="book" size={20} color="#C0282A" /></View>
-          <Text style={styles.quickLabel}>Homework</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.quickBtn} onPress={() => router.push("/(tabs)/fees")} activeOpacity={0.7}>
-          <View style={styles.quickIcon}><Feather name="credit-card" size={20} color="#C0282A" /></View>
-          <Text style={styles.quickLabel}>Fees</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Schedule — 320ms */}
+      <FadeSlideIn delay={320}>
+        <Text style={styles.sectionLabel}>TODAY'S SCHEDULE</Text>
+        {todaySlots.length === 0 ? (
+          <View style={styles.noSchedule}>
+            <Feather name="coffee" size={20} color="#888882" />
+            <Text style={styles.noScheduleText}>
+              {new Date().getDay() === 0 || new Date().getDay() === 6
+                ? "No classes today — enjoy your weekend!"
+                : "No timetable set for today"}
+            </Text>
+          </View>
+        ) : (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.scheduleScroll}
+          >
+            {todaySlots.map((slot, i) => (
+              <ScheduleCard
+                key={i}
+                time={slot.time}
+                subject={slot.subject}
+                teacher={slot.teacher}
+                isActive={slot.isActive}
+              />
+            ))}
+          </ScrollView>
+        )}
+      </FadeSlideIn>
+
+      {/* Quick actions — 400ms */}
+      <FadeSlideIn delay={400}>
+        <Text style={styles.sectionLabel}>QUICK ACTIONS</Text>
+        <View style={styles.quickActions}>
+          <TouchableOpacity style={styles.quickBtn} onPress={() => router.push("/timetable")} activeOpacity={0.7}>
+            <View style={styles.quickIcon}><Feather name="calendar" size={20} color="#C0282A" /></View>
+            <Text style={styles.quickLabel}>Timetable</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.quickBtn} onPress={() => router.push("/attendance")} activeOpacity={0.7}>
+            <View style={styles.quickIcon}><Feather name="check-square" size={20} color="#C0282A" /></View>
+            <Text style={styles.quickLabel}>Attendance</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.quickBtn} onPress={() => router.push("/(tabs)/homework")} activeOpacity={0.7}>
+            <View style={styles.quickIcon}><Feather name="book" size={20} color="#C0282A" /></View>
+            <Text style={styles.quickLabel}>Homework</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.quickBtn} onPress={() => router.push("/(tabs)/fees")} activeOpacity={0.7}>
+            <View style={styles.quickIcon}><Feather name="credit-card" size={20} color="#C0282A" /></View>
+            <Text style={styles.quickLabel}>Fees</Text>
+          </TouchableOpacity>
+        </View>
+      </FadeSlideIn>
     </ScrollView>
   );
 }
@@ -185,16 +260,8 @@ const styles = StyleSheet.create({
   statsGrid: { flexDirection: "row", paddingHorizontal: 16, gap: 10, marginBottom: 4 },
   sectionLabel: { fontSize: 11, fontWeight: "600", color: "#888882", letterSpacing: 0.8, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 10 },
   scheduleScroll: { paddingHorizontal: 16, paddingBottom: 4 },
-  upcomingCard: { backgroundColor: "#FFFFFF", borderRadius: 14, marginHorizontal: 16, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2, overflow: "hidden", padding: 14, gap: 12 },
-  upcomingRow: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
-  upcomingDivider: { height: 0.5, backgroundColor: "rgba(0,0,0,0.08)" },
-  upcomingBadge: { alignSelf: "flex-start", backgroundColor: "#F8EBEB", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4, marginBottom: 6 },
-  upcomingBadgeText: { fontSize: 10, fontWeight: "600", color: "#C0282A" },
-  upcomingTitle: { fontSize: 14, fontWeight: "600", color: "#1A1A1A", marginBottom: 3 },
-  upcomingDate: { fontSize: 12, color: "#888882" },
-  dateBlock: { width: 46, height: 46, borderRadius: 10, backgroundColor: "#F8EBEB", alignItems: "center", justifyContent: "center" },
-  dateNum: { fontSize: 18, fontWeight: "700", color: "#C0282A", lineHeight: 20 },
-  dateMonth: { fontSize: 9, fontWeight: "600", color: "#C0282A", lineHeight: 12 },
+  noSchedule: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: "#FFFFFF", borderRadius: 14, marginHorizontal: 16, paddingHorizontal: 16, paddingVertical: 18, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
+  noScheduleText: { fontSize: 13, color: "#888882", flex: 1 },
   quickActions: { flexDirection: "row", paddingHorizontal: 16, gap: 10, marginBottom: 8 },
   quickBtn: { flex: 1, backgroundColor: "#FFFFFF", borderRadius: 14, padding: 14, alignItems: "center", gap: 8, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
   quickIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#F8EBEB", alignItems: "center", justifyContent: "center" },

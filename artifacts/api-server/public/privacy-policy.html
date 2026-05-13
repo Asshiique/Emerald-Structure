@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — Emerald International School App</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #F5F4F2;
+      color: #1A1A1A;
+      line-height: 1.7;
+      padding: 0 16px 60px;
+    }
+    header {
+      background: #C0282A;
+      color: #fff;
+      padding: 32px 24px 24px;
+      margin: 0 -16px 32px;
+    }
+    header h1 { font-size: 1.6rem; font-weight: 700; }
+    header p  { font-size: 0.9rem; opacity: 0.8; margin-top: 6px; }
+    .container { max-width: 720px; margin: 0 auto; }
+    h2 {
+      font-size: 1.1rem; font-weight: 700;
+      color: #C0282A; margin: 28px 0 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(192,40,42,0.15);
+    }
+    p  { margin-bottom: 12px; font-size: 0.95rem; color: #333; }
+    ul { margin: 0 0 12px 20px; }
+    li { font-size: 0.95rem; color: #333; margin-bottom: 6px; }
+    a  { color: #C0282A; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .badge {
+      display: inline-block;
+      background: #EAF3DE; color: #27500A;
+      font-size: 0.75rem; font-weight: 700;
+      padding: 3px 10px; border-radius: 20px;
+      margin-bottom: 20px;
+    }
+    footer {
+      margin-top: 48px; padding-top: 24px;
+      border-top: 1px solid rgba(0,0,0,0.1);
+      font-size: 0.85rem; color: #888;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>Privacy Policy</h1>
+      <p>Emerald International School Mobile Application</p>
+    </div>
+  </header>
+
+  <div class="container">
+    <span class="badge">Last updated: May 2026</span>
+
+    <p>
+      This Privacy Policy describes how <strong>Emerald International School</strong>
+      ("School", "we", "our") collects, uses, and protects information collected
+      through the Emerald School mobile application ("App") made available to
+      students, parents/guardians, teachers, and administrative staff.
+    </p>
+
+    <h2>1. Who We Are</h2>
+    <p>
+      Emerald International School<br />
+      Vadakkumannam, Mannarkkad, Palakkad, Kerala — 678582<br />
+      Email: <a href="mailto:emeraldinternationalschoolmkd@gmail.com">emeraldinternationalschoolmkd@gmail.com</a><br />
+      Phone: +91 6238960292
+    </p>
+
+    <h2>2. Information We Collect</h2>
+    <p>We collect information necessary to operate the school management system:</p>
+    <ul>
+      <li><strong>Student data:</strong> Name, date of birth, gender, blood group, class/section, roll number, admission number, previous school.</li>
+      <li><strong>Parent/Guardian data:</strong> Name, phone number, WhatsApp number, email address, home address.</li>
+      <li><strong>Staff data:</strong> Name, employee ID, department, class assignment, contact details.</li>
+      <li><strong>Attendance records:</strong> Daily present/absent/late status per student.</li>
+      <li><strong>Fee records:</strong> Term-wise fee amounts, due dates, and payment status.</li>
+      <li><strong>Homework and notices:</strong> Content posted by teachers and administrators.</li>
+      <li><strong>Account credentials:</strong> Email address and encrypted password (managed by Firebase Authentication — passwords are never stored in plaintext).</li>
+    </ul>
+
+    <h2>3. How We Use Your Information</h2>
+    <ul>
+      <li>Provide parents with real-time access to their child's attendance, fees, homework, and school notices.</li>
+      <li>Allow teachers to mark attendance and post homework for their classes.</li>
+      <li>Enable administrators to manage student and staff records.</li>
+      <li>Send automated reminders for overdue fees and daily attendance summaries to staff.</li>
+      <li>Maintain secure, role-based access so only authorized users see relevant data.</li>
+    </ul>
+
+    <h2>4. Data We Do NOT Collect</h2>
+    <ul>
+      <li>We do <strong>not</strong> collect location data.</li>
+      <li>We do <strong>not</strong> serve advertisements.</li>
+      <li>We do <strong>not</strong> sell or share student or parent data with any third party for commercial purposes.</li>
+      <li>We do <strong>not</strong> use tracking cookies or behavioral analytics.</li>
+    </ul>
+
+    <h2>5. Third-Party Services</h2>
+    <p>The App uses the following trusted third-party services to function:</p>
+    <ul>
+      <li><strong>Google Firebase</strong> — Authentication and Firestore real-time database. <a href="https://firebase.google.com/support/privacy" target="_blank">Firebase Privacy Policy ↗</a></li>
+      <li><strong>Google Cloud Platform</strong> — Backend hosting and data storage. <a href="https://cloud.google.com/terms/cloud-privacy-notice" target="_blank">Google Cloud Privacy Notice ↗</a></li>
+      <li><strong>Expo / React Native</strong> — Mobile application framework. <a href="https://expo.dev/privacy" target="_blank">Expo Privacy Policy ↗</a></li>
+    </ul>
+    <p>No data is shared with any other third parties.</p>
+
+    <h2>6. Data Retention</h2>
+    <p>
+      Student and parent records are retained for the duration of the student's enrollment
+      at Emerald International School and for up to 3 years after leaving, as required
+      for academic record-keeping. You may request deletion of your account data by
+      contacting the school office.
+    </p>
+
+    <h2>7. Data Security</h2>
+    <ul>
+      <li>All data is transmitted over HTTPS (TLS encryption).</li>
+      <li>Passwords are managed by Firebase Authentication and are never stored by the school.</li>
+      <li>API endpoints are protected by Firebase JWT token verification.</li>
+      <li>Role-based access control ensures parents can only see their own child's data.</li>
+      <li>Rate limiting is applied on all API routes to prevent unauthorized bulk access.</li>
+    </ul>
+
+    <h2>8. Children's Privacy</h2>
+    <p>
+      This App is operated by a school and is intended for use by parents/guardians on
+      behalf of their children, and by school staff. Student accounts are not created
+      directly — all student data is managed by the school administration and accessed
+      by parents through their verified parent accounts.
+    </p>
+
+    <h2>9. Your Rights</h2>
+    <p>You have the right to:</p>
+    <ul>
+      <li>Access the personal data we hold about you or your child.</li>
+      <li>Request correction of inaccurate data.</li>
+      <li>Request deletion of your account and associated data.</li>
+      <li>Withdraw consent for data processing (note: this may limit app functionality).</li>
+    </ul>
+    <p>
+      To exercise these rights, contact the school office at
+      <a href="mailto:emeraldinternationalschoolmkd@gmail.com">emeraldinternationalschoolmkd@gmail.com</a>.
+    </p>
+
+    <h2>10. Changes to This Policy</h2>
+    <p>
+      We may update this Privacy Policy from time to time. When we do, we will post a notice
+      within the App and update the "Last updated" date above. Continued use of the App
+      after any changes constitutes acceptance of the revised policy.
+    </p>
+
+    <h2>11. Contact</h2>
+    <p>
+      If you have any questions about this Privacy Policy, please contact:<br /><br />
+      <strong>Principal, Emerald International School</strong><br />
+      Vadakkumannam, Mannarkkad, Palakkad, Kerala — 678582<br />
+      📧 <a href="mailto:emeraldinternationalschoolmkd@gmail.com">emeraldinternationalschoolmkd@gmail.com</a><br />
+      📞 +91 6238960292
+    </p>
+
+    <footer>
+      &copy; 2026 Emerald International School. All rights reserved.
+    </footer>
+  </div>
+</body>
+</html>
