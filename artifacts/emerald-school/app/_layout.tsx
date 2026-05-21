@@ -66,6 +66,8 @@ function RootLayoutNav() {
       <Stack.Screen name="teacher/attendance" />
       <Stack.Screen name="teacher/add-homework" />
       <Stack.Screen name="teacher/performance" />
+      <Stack.Screen name="teacher/award-points" />
+      <Stack.Screen name="admin/month-close" />
     </Stack>
   );
 }

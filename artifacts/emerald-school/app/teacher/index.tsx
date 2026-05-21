@@ -38,7 +38,8 @@ export default function TeacherDashboardPage() {
     { icon: "users", label: "My\nStudents", color: "#7B3F9E", bg: "#F3EBF8", route: "/teacher/students" },
     { icon: "list", label: "All\nStudents", color: "#2980B9", bg: "#EAF2F8", route: "/teacher/all-students" },
     { icon: "credit-card", label: "Fee\nManagement", color: "#C0282A", bg: "#F8EBEB", route: "/admin/fees" },
-    { icon: "star", label: "My\nPerformance", color: "#1A7A6E", bg: "#E6F4F2", route: "/teacher/performance" },
+    { icon: "star", label: "Award\nPoints", color: "#C8972A", bg: "#FFF8EC", route: "/teacher/award-points" },
+    { icon: "award", label: "My\nPerformance", color: "#1A7A6E", bg: "#E6F4F2", route: "/teacher/performance" },
   ].filter(Boolean) as { icon: string; label: string; color: string; bg: string; route: string }[];
 
   return (

@@ -32,6 +32,10 @@ function NativeTabLayout({ role }: { role: string }) {
             <Icon sf={{ default: "creditcard", selected: "creditcard.fill" }} />
             <Label>Fees</Label>
           </NativeTabs.Trigger>
+          <NativeTabs.Trigger name="recognition">
+            <Icon sf={{ default: "star", selected: "star.fill" }} />
+            <Label>Recognition</Label>
+          </NativeTabs.Trigger>
           <NativeTabs.Trigger name="profile">
             <Icon sf={{ default: "person.circle", selected: "person.circle.fill" }} />
             <Label>Profile</Label>
@@ -102,6 +106,14 @@ function ClassicTabLayout({ role }: { role: string }) {
           title: "Fees",
           tabBarIcon: ({ color }) =>
             isIOS ? <SymbolView name="creditcard.fill" tintColor={color} size={20} /> : <Feather name="credit-card" size={20} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="recognition"
+        options={{
+          title: "Recognition",
+          tabBarIcon: ({ color }) =>
+            isIOS ? <SymbolView name="star.fill" tintColor={color} size={20} /> : <Feather name="star" size={20} color={color} />,
         }}
       />
       <Tabs.Screen

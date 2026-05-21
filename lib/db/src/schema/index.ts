@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, jsonb, boolean, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, jsonb, boolean, integer, pgEnum, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -62,3 +62,77 @@ export type UserRow = typeof usersTable.$inferSelect;
 export type NoticeRow = typeof noticesTable.$inferSelect;
 export type AttendanceRow = typeof attendanceTable.$inferSelect;
 export type FeeRow = typeof feesTable.$inferSelect;
+
+// ─── Student of the Month ─────────────────────────────────────────────────────
+
+export const pointCategoryEnum = pgEnum("point_category", [
+  "curricular",
+  "non_curricular",
+  "discipline",
+  "homework",
+  "behaviour",
+]);
+
+export const pointLogTable = pgTable("point_log", {
+  id: text("id").primaryKey(),
+  /** Firestore student document ID */
+  studentId: text("student_id").notNull(),
+  studentName: text("student_name").notNull(),
+  /** Firebase UID of the awarding teacher */
+  teacherId: text("teacher_id").notNull(),
+  teacherName: text("teacher_name").notNull(),
+  /** Class section string e.g. "X-A" — consistent with rest of schema */
+  classSection: text("class_section").notNull(),
+  category: pointCategoryEnum("category").notNull(),
+  points: integer("points").notNull(),
+  note: text("note"),
+  awardedAt: timestamp("awarded_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const monthlyWinnerTable = pgTable(
+  "monthly_winner",
+  {
+    id: text("id").primaryKey(),
+    classSection: text("class_section").notNull(),
+    studentId: text("student_id").notNull(),
+    studentName: text("student_name").notNull(),
+    /** 1–12 */
+    month: integer("month").notNull(),
+    year: integer("year").notNull(),
+    /** Firebase UID of admin who closed the month */
+    closedBy: text("closed_by").notNull(),
+    closedAt: timestamp("closed_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    uniqueClassMonth: unique("monthly_winner_class_month_year").on(
+      t.classSection,
+      t.month,
+      t.year
+    ),
+  })
+);
+
+export const repeatWinnerGuardTable = pgTable(
+  "repeat_winner_guard",
+  {
+    id: text("id").primaryKey(),
+    studentId: text("student_id").notNull(),
+    classSection: text("class_section").notNull(),
+    lastWonMonth: integer("last_won_month").notNull(),
+    lastWonYear: integer("last_won_year").notNull(),
+  },
+  (t) => ({
+    uniqueStudentClass: unique("repeat_winner_guard_student_class").on(
+      t.studentId,
+      t.classSection
+    ),
+  })
+);
+
+export const insertPointLogSchema = createInsertSchema(pointLogTable);
+export const insertMonthlyWinnerSchema = createInsertSchema(monthlyWinnerTable);
+export const insertRepeatWinnerGuardSchema = createInsertSchema(repeatWinnerGuardTable);
+
+export type PointLogRow = typeof pointLogTable.$inferSelect;
+export type MonthlyWinnerRow = typeof monthlyWinnerTable.$inferSelect;
+export type RepeatWinnerGuardRow = typeof repeatWinnerGuardTable.$inferSelect;
