@@ -9,6 +9,7 @@ import {
   query,
   setDoc,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { db } from "@/lib/firebase";
@@ -277,6 +278,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [data, setData] = useState<AppData>(INITIAL_DATA);
   const [isLoading, setIsLoading] = useState(true);
 
+  const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "";
+
   // NOTE: Read-notice IDs are now persisted by hooks/useNotices.ts.
   // This ref is kept so markNoticeRead below remains functional for any
   // remaining callers; the canonical source of truth is AsyncStorage.
@@ -302,6 +305,12 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     const markEssential = () => { if (++essential >= 3) setIsLoading(false); };
     const fallback = setTimeout(() => setIsLoading(false), 6000);
 
+    // ── Role helpers ─────────────────────────────────────────────────────────
+    const isAdmin = user.role === "admin";
+    const isTeacher = user.role === "teacher";
+    const isParentOrStudent = user.role === "parent" || user.role === "student";
+
+    // ── Settings (essential #1) — everyone ───────────────────────────────────
     unsubs.push(
       onSnapshot(doc(db, "settings", "main"), (snap) => {
         if (snap.exists()) {
@@ -325,6 +334,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       })
     );
 
+    // ── Staff directory (essential #2) — everyone ─────────────────────────────
     unsubs.push(
       onSnapshot(collection(db, "staff"), (snap) => {
         setData((prev) => ({
@@ -335,16 +345,33 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       })
     );
 
-    unsubs.push(
-      onSnapshot(collection(db, "students"), (snap) => {
-        setData((prev) => ({
-          ...prev,
-          students: snap.docs.map((d) => ({ ...d.data(), id: d.id } as Student)),
-        }));
-        markEssential();
-      })
-    );
+    // ── Students (essential #3) — ROLE FILTERED ───────────────────────────────
+    // Admin   : entire collection (needed for student management)
+    // Teacher : their class section only
+    // Parent  : their own child only (matched by parentEmail — always set on student docs)
+    const studentsQuery = isAdmin
+      ? collection(db, "students")
+      : isTeacher && user.classSection
+        ? query(collection(db, "students"), where("classSection", "==", user.classSection))
+        : isParentOrStudent && user.email
+          ? query(collection(db, "students"), where("parentEmail", "==", user.email))
+          : null;
 
+    if (studentsQuery) {
+      unsubs.push(
+        onSnapshot(studentsQuery, (snap) => {
+          setData((prev) => ({
+            ...prev,
+            students: snap.docs.map((d) => ({ ...d.data(), id: d.id } as Student)),
+          }));
+          markEssential();
+        })
+      );
+    } else {
+      markEssential(); // Unblock loading even if no query applies
+    }
+
+    // ── Homework — everyone (assignment titles are not sensitive) ─────────────
     unsubs.push(
       onSnapshot(
         query(collection(db, "homework"), orderBy("postedAt", "desc")),
@@ -357,19 +384,26 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       )
     );
 
-    // NOTE: Notices Firestore listener intentionally removed.
-    // Notices are now fetched via GET /api/notices using React Query.
-    // See hooks/useNotices.ts for the new data source.
+    // ── Attendance — class-scoped for non-admins ──────────────────────────────
+    // Records are per-class per-day (not per-student), so class-level access is fine.
+    const attendanceQuery = isAdmin
+      ? collection(db, "attendance")
+      : user.classSection
+        ? query(collection(db, "attendance"), where("classSection", "==", user.classSection))
+        : null;
 
-    unsubs.push(
-      onSnapshot(collection(db, "attendance"), (snap) => {
-        setData((prev) => ({
-          ...prev,
-          attendance: snap.docs.map((d) => ({ ...d.data(), id: d.id } as AttendanceRecord)),
-        }));
-      })
-    );
+    if (attendanceQuery) {
+      unsubs.push(
+        onSnapshot(attendanceQuery, (snap) => {
+          setData((prev) => ({
+            ...prev,
+            attendance: snap.docs.map((d) => ({ ...d.data(), id: d.id } as AttendanceRecord)),
+          }));
+        })
+      );
+    }
 
+    // ── Gallery — everyone (school event photos, not sensitive) ──────────────
     unsubs.push(
       onSnapshot(
         query(collection(db, "gallery"), orderBy("uploadedAt", "desc")),
@@ -382,23 +416,44 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       )
     );
 
-    unsubs.push(
-      onSnapshot(collection(db, "evaluations"), (snap) => {
-        setData((prev) => ({
-          ...prev,
-          evaluations: snap.docs.map((d) => ({ ...d.data(), id: d.id } as Evaluation)),
-        }));
-      })
-    );
+    // ── Evaluations — STAFF ONLY (teacher performance data, highly sensitive) ─
+    if (isAdmin || isTeacher) {
+      unsubs.push(
+        onSnapshot(collection(db, "evaluations"), (snap) => {
+          setData((prev) => ({
+            ...prev,
+            evaluations: snap.docs.map((d) => ({ ...d.data(), id: d.id } as Evaluation)),
+          }));
+        })
+      );
+    }
 
-    unsubs.push(
-      onSnapshot(collection(db, "fees"), (snap) => {
-        setData((prev) => ({
-          ...prev,
-          fees: snap.docs.map((d) => ({ ...d.data(), id: d.id } as FeeRecord)),
-        }));
-      })
-    );
+    // ── Fees — ROLE FILTERED (financial data, highly sensitive) ──────────────
+    // Admin  : all fee records (needed for school-wide fee management)
+    // Parent : only their own child's fee record (matched by parentEmail)
+    // Teacher: no access — teachers do not manage fees
+    if (isAdmin) {
+      unsubs.push(
+        onSnapshot(collection(db, "fees"), (snap) => {
+          setData((prev) => ({
+            ...prev,
+            fees: snap.docs.map((d) => ({ ...d.data(), id: d.id } as FeeRecord)),
+          }));
+        })
+      );
+    } else if (isParentOrStudent && user.email) {
+      unsubs.push(
+        onSnapshot(
+          query(collection(db, "fees"), where("parentEmail", "==", user.email)),
+          (snap) => {
+            setData((prev) => ({
+              ...prev,
+              fees: snap.docs.map((d) => ({ ...d.data(), id: d.id } as FeeRecord)),
+            }));
+          }
+        )
+      );
+    }
 
     return () => {
       clearTimeout(fallback);
@@ -464,7 +519,22 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   };
 
   const removeStudent = async (id: string) => {
-    await deleteDoc(doc(db, "students", id));
+    // Delegates to the Express API for cascade deletion across both databases:
+    //   Postgres  — point_log, repeat_winner_guard, fees rows
+    //   Firestore — students/{id}  and  fees/{id}  (batch delete via Admin SDK)
+    // Direct Firestore deleteDoc is intentionally not used here; the Firestore
+    // security rules block client-side deletion of student documents.
+    const { auth: firebaseAuth } = await import("@/lib/firebase");
+    const token = await firebaseAuth.currentUser?.getIdToken();
+    if (!token) throw new Error("Not authenticated");
+    const res = await fetch(`${API_URL}/api/students/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      const body = (await res.json()) as { message?: string };
+      throw new Error(body.message ?? "Failed to delete student");
+    }
   };
 
   const getAttendanceForDate = (date: string, classSection: string) =>

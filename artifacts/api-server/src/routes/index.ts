@@ -5,6 +5,7 @@ import noticesRouter from "./notices";
 import attendanceRouter from "./attendance";
 import feesRouter from "./fees";
 import recognitionRouter from "./recognition";
+import studentsRouter from "./students";
 
 const router: IRouter = Router();
 
@@ -14,5 +15,6 @@ router.use(noticesRouter);
 router.use(attendanceRouter);
 router.use(feesRouter);
 router.use(recognitionRouter);
+router.use(studentsRouter);
 
 export default router;

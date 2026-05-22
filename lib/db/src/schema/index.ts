@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, jsonb, boolean, integer, pgEnum, unique } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, jsonb, boolean, integer, pgEnum, unique, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -15,7 +15,9 @@ export const usersTable = pgTable("users", {
   hasSeenWelcome: boolean("has_seen_welcome").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-});
+}, (t) => ({
+  roleIdx: index("users_role_idx").on(t.role),
+}));
 
 export const noticesTable = pgTable("notices", {
   id: text("id").primaryKey(),
@@ -26,7 +28,10 @@ export const noticesTable = pgTable("notices", {
   postedAt: timestamp("posted_at", { withTimezone: true }).defaultNow().notNull(),
   isRead: boolean("is_read").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
+}, (t) => ({
+  postedAtIdx: index("notices_posted_at_idx").on(t.postedAt),
+  targetRoleIdx: index("notices_target_role_idx").on(t.targetRole),
+}));
 
 export const attendanceTable = pgTable("attendance", {
   id: text("id").primaryKey(),
@@ -35,7 +40,10 @@ export const attendanceTable = pgTable("attendance", {
   teacherId: text("teacher_id").notNull(),
   records: jsonb("records").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
+}, (t) => ({
+  // Compound index: attendance is always queried by both classSection and date together
+  classSectionDateIdx: index("attendance_class_section_date_idx").on(t.classSection, t.date),
+}));
 
 export const feesTable = pgTable("fees", {
   id: text("id").primaryKey(),
@@ -46,7 +54,9 @@ export const feesTable = pgTable("fees", {
   dueDate: text("due_date").notNull(),
   paidAt: timestamp("paid_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
+}, (t) => ({
+  studentIdIdx: index("fees_student_id_idx").on(t.studentId),
+}));
 
 export const insertUserSchema = createInsertSchema(usersTable);
 export const insertNoticeSchema = createInsertSchema(noticesTable);
@@ -87,7 +97,12 @@ export const pointLogTable = pgTable("point_log", {
   points: integer("points").notNull(),
   note: text("note"),
   awardedAt: timestamp("awarded_at", { withTimezone: true }).defaultNow().notNull(),
-});
+}, (t) => ({
+  studentIdIdx: index("point_log_student_id_idx").on(t.studentId),
+  teacherIdIdx: index("point_log_teacher_id_idx").on(t.teacherId),
+  // Compound: leaderboard queries always filter by classSection + awardedAt range
+  classSectionAwardedAtIdx: index("point_log_class_section_awarded_at_idx").on(t.classSection, t.awardedAt),
+}));
 
 export const monthlyWinnerTable = pgTable(
   "monthly_winner",
@@ -109,6 +124,8 @@ export const monthlyWinnerTable = pgTable(
       t.month,
       t.year
     ),
+    // Index to quickly fetch all winners for a class (hall of fame)
+    classSectionIdx: index("monthly_winner_class_section_idx").on(t.classSection),
   })
 );
 

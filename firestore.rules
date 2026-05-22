@@ -1,0 +1,98 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helper ───────────────────────────────────────────────────────────────
+    // A user is "active staff" if their Firebase UID matches a Firestore staff
+    // document that has isActive == true.
+    // Staff accounts created with a password have their Firebase UID as their
+    // staff document ID (set by createFirebaseAccount in firebaseBootstrap.ts).
+    function isActiveStaff() {
+      let staffRef = /databases/$(database)/documents/staff/$(request.auth.uid);
+      return request.auth != null
+        && exists(staffRef)
+        && get(staffRef).data.isActive == true;
+    }
+
+    // ─── App settings ─────────────────────────────────────────────────────────
+    match /settings/{docId} {
+      allow read: if request.auth != null;
+      allow write: if isActiveStaff();
+    }
+
+    // ─── User profiles (inside Firestore, not Postgres users table) ───────────
+    match /users/{userId} {
+      // Users can read/write their own profile; staff can read all
+      allow read: if request.auth != null
+        && (request.auth.uid == userId || isActiveStaff());
+      allow write: if request.auth != null
+        && (request.auth.uid == userId || isActiveStaff());
+    }
+
+    // ─── Staff directory ──────────────────────────────────────────────────────
+    match /staff/{staffId} {
+      allow read: if request.auth != null;
+      // Writes go through the app (addStaff / updateStaff / removeStaff).
+      // Only active staff can write staff records.
+      allow write: if isActiveStaff();
+    }
+
+    // ─── Students ─────────────────────────────────────────────────────────────
+    // Active staff can read all students.
+    // A parent/guardian can read ONLY their own child's document
+    // (parentUid must match the requester's Firebase UID).
+    // Direct deletion is blocked — must go through DELETE /api/students/:id
+    // so that Postgres records are cleaned up atomically.
+    match /students/{studentId} {
+      allow read: if request.auth != null
+        && (isActiveStaff()
+            || resource.data.parentUid == request.auth.uid);
+      allow create, update: if isActiveStaff();
+      allow delete: if false; // enforced via Express API for cascade cleanup
+    }
+
+    // ─── Attendance ───────────────────────────────────────────────────────────
+    // Records are class-level (one doc per class per day).
+    // All authenticated users may read; only staff may write.
+    match /attendance/{attId} {
+      allow read: if request.auth != null;
+      allow write: if isActiveStaff();
+    }
+
+    // ─── Homework ─────────────────────────────────────────────────────────────
+    match /homework/{hwId} {
+      allow read: if request.auth != null;
+      allow write: if isActiveStaff();
+    }
+
+    // ─── Teacher evaluations (SENSITIVE — staff only) ─────────────────────────
+    match /evaluations/{evalId} {
+      allow read, write: if isActiveStaff();
+    }
+
+    // ─── Fee records (SENSITIVE — financial data) ─────────────────────────────
+    // Staff can read all fee records.
+    // Parents can read ONLY the fee record whose parentEmail matches their
+    // Firebase Auth token email.
+    match /fees/{feeId} {
+      allow read: if request.auth != null
+        && (isActiveStaff()
+            || resource.data.parentEmail == request.auth.token.email);
+      allow write: if isActiveStaff();
+    }
+
+    // ─── Gallery ──────────────────────────────────────────────────────────────
+    match /gallery/{galId} {
+      allow read: if request.auth != null;
+      allow write: if isActiveStaff();
+    }
+
+    // ─── Recognition notifications ────────────────────────────────────────────
+    // Written exclusively by the Express server via Firebase Admin SDK
+    // (Admin SDK bypasses these rules).  All authenticated users may read.
+    match /notifications/{classSection}/recognition/{month} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+  }
+}
