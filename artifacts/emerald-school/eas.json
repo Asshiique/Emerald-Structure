@@ -6,7 +6,7 @@
   "build": {
     "preview": {
       "env": {
-        "EXPO_PUBLIC_API_URL": "http://192.168.0.173:3000",
+        "EXPO_PUBLIC_API_URL": "https://emerald-structure-ashiquemuhamme1.replit.app",
         "PNPM_VERSION": "9.15.9"
       },
       "ios": {
@@ -18,7 +18,7 @@
     },
     "production": {
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://your-api-server.example.com",
+        "EXPO_PUBLIC_API_URL": "https://emerald-structure-ashiquemuhamme1.replit.app",
         "PNPM_VERSION": "9.15.9"
       },
       "ios": {
