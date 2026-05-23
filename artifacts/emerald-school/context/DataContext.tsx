@@ -347,15 +347,15 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
     // ── Students (essential #3) — ROLE FILTERED ───────────────────────────────
     // Admin   : entire collection (needed for student management)
-    // Teacher : their class section only
-    // Parent  : their own child only (matched by parentEmail — always set on student docs)
-    const studentsQuery = isAdmin
+    // Teacher : entire collection — teachers are staff and need the full school
+    //           directory for homework, award points, attendance, and emergency
+    //           contacts. The privacy risk was parents seeing other students.
+    // Parent  : their own child only (matched by parentEmail)
+    const studentsQuery = (isAdmin || isTeacher)
       ? collection(db, "students")
-      : isTeacher && user.classSection
-        ? query(collection(db, "students"), where("classSection", "==", user.classSection))
-        : isParentOrStudent && user.email
-          ? query(collection(db, "students"), where("parentEmail", "==", user.email))
-          : null;
+      : isParentOrStudent && user.email
+        ? query(collection(db, "students"), where("parentEmail", "==", user.email))
+        : null;
 
     if (studentsQuery) {
       unsubs.push(
@@ -384,13 +384,19 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       )
     );
 
-    // ── Attendance — class-scoped for non-admins ──────────────────────────────
-    // Records are per-class per-day (not per-student), so class-level access is fine.
+    // ── Attendance — all for staff, class-scoped for parents ─────────────────
+    // Teachers need all attendance records to mark & view their class.
+    // If a teacher has classSection set, scope to that class for efficiency.
+    // Admins always get everything. Parents see their child's class only.
     const attendanceQuery = isAdmin
       ? collection(db, "attendance")
-      : user.classSection
-        ? query(collection(db, "attendance"), where("classSection", "==", user.classSection))
-        : null;
+      : isTeacher
+        ? user.classSection
+          ? query(collection(db, "attendance"), where("classSection", "==", user.classSection))
+          : collection(db, "attendance") // teacher without classSection → all
+        : user.classSection
+          ? query(collection(db, "attendance"), where("classSection", "==", user.classSection))
+          : null;
 
     if (attendanceQuery) {
       unsubs.push(
